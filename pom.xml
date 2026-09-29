@@ -13,8 +13,8 @@
     <description>Pong personalizável por skins, com cronômetro estilo futebol, bola de fogo e animações - Java Desktop (Swing)</description>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.class>com.portfolio.pong.ui.TelaPong</main.class>
     </properties>

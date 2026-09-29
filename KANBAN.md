@@ -20,13 +20,9 @@ src/main/java/com/portfolio/pong/
 
 | # | Prioridade | Camada | Tarefa | Detalhes |
 |---|-----------|--------|--------|----------|
-| 1 | Alta | ui | `TelaPong` — briefing | Card de início: modo, dificuldade, tempo/placar, skin com preview animado, controles |
-| 2 | Alta | ui | `TelaPong` — jogo | Placar futebol P1\|⏱\|P2 topo central, timer vermelho+piscando nos 10s finais, indicador do especial 🔥, countdown 3-2-1-JÁ, banner GOL!, saque rápido |
-| 3 | Alta | ui | `TelaPong` — pausa/fim | Pausa verdadeira (overlay Retomar/Reiniciar/Voltar); fim com stats (placar, duração, melhor troca, velocidade máxima) + Jogar novamente/Início |
-| 4 | Média | ui | Visual | Glassmorphism nos cards, glow de neon, redimensionável |
-| 5 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + `PongTest` cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, especial (1 uso), skins/persistência/fallback, fogo por velocidade |
-| 6 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
-| 7 | Média | (branch) | Sons: reproduzir OK em build | Confirmar que os `.wav` entram no `.jar` e tocam via `mvn package` + `java -jar` |
+| 1 | Alta | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + `PongTest` cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, especial (1 uso), skins/persistência/fallback, fogo por velocidade |
+| 2 | Alta | ui | Validação visual | Jogar/testar manualmente: briefing, modos, especial, skins, gol de ouro, pausa, fim + stats, som |
+| 3 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
 
 ## Fazendo (Doing)
 
@@ -47,6 +43,7 @@ _— vazio —_
 - **fx**: `Animacoes` — `emitirFogo` (chamas + marca de queimado persistente, limite 250), `explosaoGol` (40 partículas + tremor), `confete`, `adicionarTremor`/decaimento, `limpar`, limite de 400 partículas — validado por smoke test
 - **audio**: `EfeitosSonoros` — mesmo padrão da Forca (enum `Som`, carga preguiçosa, cache de `Clip`, ganho −9 dB, interruptor global)
 - **audio**: 6 `.wav` sintetizados (PCM 16-bit 44.1kHz mono) em `src/main/resources/sons/` — rebater, parede, gol, especial, clique, vitoria — validados por `AudioSystem` (carregamento pelo classpath)
+- **ui**: `TelaPong` — briefing customizado, controle via KeyBindings (W/S, ↑/↓, Z/M, Espaço, Esc), campo 800×500 escalado (letterbox/responsivo), HUD futebol (P1\|⏱\|P2, timer vermelho piscando nos últimos 10s, indicador do especial 🔥), countdown 3-2-1-JÁ!, banner GOL!, gol de ouro, glassmorphism nos cards, skins com seletor ◀▶ + Personalizar (JColorChooser), pausa real com Retomar/Reiniciar/Início, fim com stats (placar/duração/melhor troca/velocidade máx) + Jogar de novo/Início, brilho no especial, marca de queimado — renderizado sem erros nas 6 fases (smoke test headless) e `mvn package` OK
 
 ## Regras (tomadas de decisão)
 

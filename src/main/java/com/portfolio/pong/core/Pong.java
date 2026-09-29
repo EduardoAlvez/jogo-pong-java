@@ -64,6 +64,9 @@ public class Pong {
     private int melhorTroca;
     private int trocaAtual;
 
+    private boolean bateuParedeNoFrame;
+    private boolean bateuRaqueteNoFrame;
+
     /**
      * @param larguraCampo largura do campo em pixels
      * @param alturaCampo  altura do campo em pixels
@@ -147,12 +150,16 @@ public class Pong {
         }
 
         // Física da bola: move, rebate nas paredes e nas raquetes.
+        bateuParedeNoFrame = false;
+        bateuRaqueteNoFrame = false;
         bola.mover(dt);
-        bola.rebaterParedes();
+        bateuParedeNoFrame = bola.rebaterParedes();
         if (bola.rebaterNaRaquete(raqueteEsquerda)) {
+            bateuRaqueteNoFrame = true;
             registrarRebatida();
         }
         if (bola.rebaterNaRaquete(raqueteDireita)) {
+            bateuRaqueteNoFrame = true;
             registrarRebatida();
         }
         velocidadeMaxima = Math.max(velocidadeMaxima, bola.getVelocidade());
@@ -352,5 +359,15 @@ public class Pong {
 
     public double getAlturaCampo() {
         return alturaCampo;
+    }
+
+    /** @return {@code true} se a bola rebateu na parede neste frame */
+    public boolean bateuParedeNoFrame() {
+        return bateuParedeNoFrame;
+    }
+
+    /** @return {@code true} se a bola rebateu em alguma raquete neste frame */
+    public boolean bateuRaqueteNoFrame() {
+        return bateuRaqueteNoFrame;
     }
 }

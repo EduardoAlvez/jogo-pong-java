@@ -48,7 +48,7 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
 ## 🚀 Como executar
 
 ### Pré-requisitos
-- **JDK 8** ou superior
+- **JDK 17** ou superior
 - (Opcional) Maven 3.x
 
 ### Opção 1 — Compilação manual (sem Maven)
@@ -88,7 +88,7 @@ Abra como projeto Maven no IntelliJ IDEA ou Eclipse e execute
 
 ```
 jogo-pong/
-├── pom.xml                                  # Build Maven (Java 8, mainClass: TelaPong)
+├── pom.xml                                  # Build Maven (Java 17, mainClass: TelaPong)
 ├── KANBAN.md                                # Quadro de tarefas do projeto
 ├── src/
 │   ├── main/java/com/portfolio/pong/
@@ -108,7 +108,7 @@ jogo-pong/
 │   │   │   └── EfeitosSonoros.java          # Sons .wav (bola, gol, especial...)
 │   │   └── ui/                              # Interface gráfica Swing
 │   │       └── TelaPong.java                # Briefing, jogo, pausa, fim, HUD
-│   │   └── resources/sons/                  # Arquivos .wav
+│   ├── main/resources/sons/                 # Arquivos .wav sintetizados
 │   └── ...
 └── out/                                     # Saída da compilação manual (ignorada no git)
 ```
@@ -131,8 +131,8 @@ jogo-pong/
 
 ## 🛠️ Tecnologias
 
-- **Java 8+** (compatível com versões superiores)
-- **Swing** (`JFrame`, `JPanel`, `CardLayout`, `JLayeredPane`)
+- **Java 17+** (compatível com versões superiores)
+- **Swing** (`JFrame`, `JPanel`, `KeyBindings`)
 - **Graphics2D** (física desenhada, partículas, glow e scanlines)
 - **`javax.sound.sampled`** (efeitos sonoros)
 - **Maven** (build e gerenciamento de dependências)
@@ -149,18 +149,22 @@ jogo-pong/
   persistentes que acumulam durante a partida.
 - **Persistência da skin**: arquivo `~/.jogo-pong-skin.properties`; se
   corrompido, cai no preset Clássico.
+- **Campo fixo escalado**: o jogo roda em 800×500 e é escalado (letterbox)
+  para caber na janela — redimensionável sem alterar a física.
+- **Sons sintetizados em código**: os `.wav` (rebater, parede, gol, especial,
+  clique, vitória) são gerados por síntese PCM 16-bit 44,1 kHz mono.
 
 ---
 
 ## 📌 Roadmap (Kanban)
 
 - [x] Scaffold do projeto (pom.xml, README, KANBAN, LICENSE, estrutura por camadas)
-- [ ] Núcleo: Raquete / Bola / Computador / Cronometro / Pong
-- [ ] Especial bola de fogo + queimado na mesa
-- [ ] Skins (presets + personalizada persistida)
-- [ ] Motor de partículas e animações
-- [ ] TelaPong: briefing, jogo, pausa, fim + HUD futebol
-- [ ] Efeitos sonoros
+- [x] Núcleo: Raquete / Bola / Computador / Cronometro / Pong
+- [x] Especial bola de fogo + queimado na mesa
+- [x] Skins (presets + personalizada persistida)
+- [x] Motor de partículas e animações
+- [x] TelaPong: briefing, jogo, pausa, fim + HUD futebol
+- [x] Efeitos sonoros
 - [ ] Testes unitários (JUnit — branch separada)
 - [ ] Publicar no GitHub
 
