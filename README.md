@@ -19,7 +19,7 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
   - **Modo Clássico**: sem relógio, primeiro a **5, 7 ou 10 pontos** (escolha sua).
 - **1P vs Computador** (dificuldade Fácil/Médio/Difícil) ou **2P local**
 - **Física clássica**: ângulo de saída varia conforme o ponto de contato na
-  raquete, bola acelera a cada rebatida (+6%, com teto)
+  raquete, bola acelera a cada rebatida (+8%, com teto de 800 px/s)
 - **Especial 🔥**: a bola pega fogo automaticamente ao ficar veloz, e cada
   jogador ainda tem **1 uso da tecla especial** (Z = P1, M = P2) por partida —
   visual-only, mas **deixa o rastro de queimado na mesa**

@@ -35,7 +35,7 @@ _— vazio —_
 - Scaffold do projeto (pom.xml, README, KANBAN, LICENSE, .gitignore, estrutura por camadas: core/skin/fx/audio/ui)
 - Repositório git inicializado com identidade configurada
 - **core**: `Raquete` — posição/tamanho, `moverCima`/`moverBaixo`, clamp nos limites do campo, `centralizar`, lado
-- **core**: `Bola` — reflexão de parede (flip Y), ângulo por ponto de contato (±60°, clamp), anti-sticking pós-rebote, +6% por rebatida (teto 800 px/s), `ajustarVelocidade` preservando ângulo, detecção de passe de lateral
+- **core**: `Bola` — reflexão de parede (flip Y), ângulo por ponto de contato (±60°, clamp), anti-sticking pós-rebote, +8% por rebatida (teto 800 px/s), `ajustarVelocidade` preservando ângulo, detecção de passe de lateral
 - **core**: `Computador` — IA batedível (velocidade limitada + reação atrasada + zona morta) com enum `Dificuldade` (Fácil/Médio/Difícil) e previsão de interceptação
 - **core**: `Cronometro` — durações 60/120/180s, contagem regressiva, `fatorDeUrgencia` (0→1), formato MM:SS
 - **core**: `Pong` — modos TEMPO e CLASSICO, placar, sacada alternada (quem sofreu saca), gol de ouro, especial (1 uso/jogador, 5s), `isBolaEmChamas()` por velocidade (≥540) ou especial, rampa de tempo (fator 0.8), stats (vel. máx, melhor troca), encerramento/vitorioso — validado por smoke test
