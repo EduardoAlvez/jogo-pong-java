@@ -637,24 +637,59 @@ public final class TelaPong {
     }
 
     private void posicaoIndicador(Graphics2D g2, int cx, int jogador, boolean visivel) {
-        boolean disponivel = jogador == 1 ? pong.isEspecial1Disponivel() : pong.isEspecial2Disponivel();
-        boolean ativo = jogador == 1 ? pong.isEspecial1Ativo() : pong.isEspecial2Ativo();
         if (!visivel) {
             return;
         }
-        String texto = "Z: 🔥" + (ativo ? " " + String.format("%.1f", pong.getTempoEspecialRestante()) : "");
-        if (jogador == 2) {
-            texto = "M: 🔥" + (ativo ? " " + String.format("%.1f", pong.getTempoEspecialRestante()) : "");
-        }
-        int larg = g2.getFontMetrics().stringWidth(texto) + 14;
-        int x = jogador == 1 ? cx - 320 + 8 : cx + 320 - 8 - larg;
+        int carga = pong.getCargaEspecial(jogador);
+        boolean ativo = jogador == 1 ? pong.isEspecial1Ativo() : pong.isEspecial2Ativo();
+        String tecla = jogador == 1 ? "Z:" : "M:";
+
         int y = 6 + HUD_ALTURA - 24;
-        Color cor = ativo ? new Color(0xFF7F27) : (disponivel ? new Color(255, 255, 255, 200)
-                : new Color(255, 255, 255, 70));
+        int barraW = 7;
+        int barraH = 14;
+        int gap = 3;
+        int textoLarg = g2.getFontMetrics().stringWidth(tecla) + 6;
+        int barraInicio = textoLarg + barraW * Pong.CARGAS_PARA_ESPECIAL + gap * (Pong.CARGAS_PARA_ESPECIAL - 1);
+        int tempoLarg = ativo ? g2.getFontMetrics().stringWidth("🔥×2 0.0") + 14 : 0;
+        int largura = textoLarg + barraInicio + tempoLarg;
+        int x = jogador == 1 ? cx - 320 + 8 : cx + 320 - 8 - largura;
+
         g2.setColor(new Color(255, 255, 255, 25));
-        g2.fillRoundRect(x, y, larg, 22, 11, 11);
+        g2.fillRoundRect(x, y, largura, barraH + 6, 9, 9);
+
+        // Tecla e cor conforme a carga restante.
+        Color cor;
+        if (ativo) {
+            cor = new Color(0xFF7F27);
+        } else if (carga == Pong.CARGAS_PARA_ESPECIAL) {
+            cor = new Color(0x34C759);
+        } else if (carga == 2) {
+            cor = new Color(0xFFD700);
+        } else if (carga == 1) {
+            cor = new Color(0xFF3B30);
+        } else {
+            cor = new Color(255, 255, 255, 70);
+        }
         g2.setColor(cor);
-        g2.drawString(texto, x + 7, y + 15);
+        g2.drawString(tecla, x + 7, y + barraH);
+
+        // Barras da bateria: marca cheia, cor vermelha com 1 carga.
+        int bx = x + 7 + textoLarg;
+        for (int i = 0; i < Pong.CARGAS_PARA_ESPECIAL; i++) {
+            boolean cheia = i < carga;
+            if (cheia) {
+                g2.setColor(cor);
+            } else {
+                g2.setColor(new Color(255, 255, 255, 30));
+            }
+            g2.fillRoundRect(bx + i * (barraW + gap), y + 3, barraW, barraH, 3, 3);
+        }
+
+        if (ativo) {
+            g2.setColor(new Color(0xFF7F27));
+            g2.drawString("🔥×2 " + String.format("%.1f", pong.getTempoEspecialRestante(jogador)),
+                    bx + barraW * Pong.CARGAS_PARA_ESPECIAL + gap * (Pong.CARGAS_PARA_ESPECIAL - 1) + 8, y + barraH);
+        }
     }
 
     private void desenharContagem(Graphics2D g2) {

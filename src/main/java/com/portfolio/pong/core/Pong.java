@@ -1,7 +1,9 @@
 package com.portfolio.pong.core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Estado da partida de Pong: orquestra raquetes, bolas, IA, cronômetro,
@@ -30,6 +32,9 @@ public class Pong {
     /** Duração do especial de bola em chamas, em segundos. */
     public static final double DURACAO_ESPECIAL = 5.0;
 
+    /** Rebatidas da própria raquete necessárias para liberar o especial. */
+    public static final int CARGAS_PARA_ESPECIAL = 3;
+
     /** Velocidade de deslocamento das raquetes dos jogadores (px/s). */
     public static final double VELOCIDADE_RAQUETE = 440.0;
 
@@ -54,11 +59,15 @@ public class Pong {
     private int pontosDireita;
     private boolean sacaEsquerda = true;
 
+    private int cargaEspecial1;
+    private int cargaEspecial2;
     private boolean especial1Ativo;
     private boolean especial2Ativo;
-    private double tempoEspecialRestante;
-    private boolean especial1Disponivel = true;
-    private boolean especial2Disponivel = true;
+    private double tempoEspecial1;
+    private double tempoEspecial2;
+    /** Velocidade de cada bola no instante do especial (restaurada ao expirar). */
+    private final Map<Bola, Double> baseEspecial1 = new HashMap<>();
+    private final Map<Bola, Double> baseEspecial2 = new HashMap<>();
 
     private boolean golDeOuro;
     private boolean encerrado;
@@ -109,11 +118,14 @@ public class Pong {
         pontosEsquerda = 0;
         pontosDireita = 0;
         sacaEsquerda = true;
+        cargaEspecial1 = 0;
+        cargaEspecial2 = 0;
         especial1Ativo = false;
         especial2Ativo = false;
-        tempoEspecialRestante = 0;
-        especial1Disponivel = true;
-        especial2Disponivel = true;
+        tempoEspecial1 = 0;
+        tempoEspecial2 = 0;
+        baseEspecial1.clear();
+        baseEspecial2.clear();
         golDeOuro = false;
         encerrado = false;
         vencedor = 0;
@@ -139,13 +151,17 @@ public class Pong {
             return;
         }
 
-        // Especiais em andamento expiram.
-        if (tempoEspecialRestante > 0) {
-            tempoEspecialRestante -= dt;
-            if (tempoEspecialRestante <= 0) {
-                tempoEspecialRestante = 0;
-                especial1Ativo = false;
-                especial2Ativo = false;
+        // Especiais em andamento expiram (timer próprio por jogador).
+        if (especial1Ativo) {
+            tempoEspecial1 -= dt;
+            if (tempoEspecial1 <= 0) {
+                encerrarEspecial(1);
+            }
+        }
+        if (especial2Ativo) {
+            tempoEspecial2 -= dt;
+            if (tempoEspecial2 <= 0) {
+                encerrarEspecial(2);
             }
         }
 
@@ -172,10 +188,13 @@ public class Pong {
         }
 
         // Rampa de tempo: a bola principal acelera conforme o cronômetro esgota.
+        // Suspensa enquanto algum especial está ativo (a bola mantém o ×2).
         if (modo == Modo.TEMPO) {
             cronometro.atualizar(dt);
-            double alvo = Bola.VELOCIDADE_BASE * (1.0 + FATOR_URGENCIA * cronometro.fatorDeUrgencia());
-            bolas.get(0).ajustarVelocidade(Math.min(alvo, Bola.VELOCIDADE_MAXIMA));
+            if (!especial1Ativo && !especial2Ativo) {
+                double alvo = Bola.VELOCIDADE_BASE * (1.0 + FATOR_URGENCIA * cronometro.fatorDeUrgencia());
+                bolas.get(0).ajustarVelocidade(Math.min(alvo, Bola.VELOCIDADE_MAXIMA));
+            }
 
             if (cronometro.acabou() && !golDeOuro) {
                 if (pontosEsquerda == pontosDireita) {
@@ -186,6 +205,9 @@ public class Pong {
                 }
             }
         }
+
+        // Durante o especial, a bola mantém o dobro da velocidade que tinha.
+        aplicarDobroEspecial();
 
         // Gols: a primeira bola a cruzar a lateral decide o frame.
         for (Bola b : bolas) {
@@ -200,28 +222,86 @@ public class Pong {
     }
 
     /**
-     * Ativa o especial de bola em chamas para um jogador (1 uso por partida).
+     * Ativa o especial (chamas + velocidade ×2) para um jogador, consumindo a
+     * bateria cheia (3 cargas). Duração {@link #DURACAO_ESPECIAL} segundos.
      *
      * @param jogador 1 (esquerda) ou 2 (direita)
-     * @return {@code false} se indisponível (já usado, encerrado ou em uso)
+     * @return {@code false} se indisponível (bateria incompleta, em uso ou encerrado)
      */
     public boolean usarEspecial(int jogador) {
         if (encerrado) {
             return false;
         }
-        if (jogador == 1 && especial1Disponivel && !especial1Ativo) {
-            especial1Disponivel = false;
+        int carga = jogador == 1 ? cargaEspecial1 : cargaEspecial2;
+        boolean ativo = jogador == 1 ? especial1Ativo : especial2Ativo;
+        if (carga < CARGAS_PARA_ESPECIAL || ativo) {
+            return false;
+        }
+
+        // Congela a velocidade de cada bola no instante da ativação.
+        Map<Bola, Double> base = jogador == 1 ? baseEspecial1 : baseEspecial2;
+        base.clear();
+        for (Bola b : bolas) {
+            base.put(b, b.getVelocidade());
+        }
+
+        if (jogador == 1) {
+            cargaEspecial1 = 0;
             especial1Ativo = true;
-            tempoEspecialRestante = DURACAO_ESPECIAL;
+            tempoEspecial1 = DURACAO_ESPECIAL;
             return true;
         }
-        if (jogador == 2 && especial2Disponivel && !especial2Ativo) {
-            especial2Disponivel = false;
+        if (jogador == 2) {
+            cargaEspecial2 = 0;
             especial2Ativo = true;
-            tempoEspecialRestante = DURACAO_ESPECIAL;
+            tempoEspecial2 = DURACAO_ESPECIAL;
             return true;
         }
         return false;
+    }
+
+    /**
+     * Restaura a velocidade das bolas ao valor anterior ao especial e desliga
+     * o estado ativo do jogador.
+     */
+    private void encerrarEspecial(int jogador) {
+        Map<Bola, Double> base = jogador == 1 ? baseEspecial1 : baseEspecial2;
+        for (Map.Entry<Bola, Double> e : base.entrySet()) {
+            if (bolas.contains(e.getKey())) {
+                e.getKey().ajustarVelocidade(e.getValue());
+            }
+        }
+        base.clear();
+        if (jogador == 1) {
+            especial1Ativo = false;
+            tempoEspecial1 = 0;
+        } else {
+            especial2Ativo = false;
+            tempoEspecial2 = 0;
+        }
+    }
+
+    /**
+     * Mantém as bolas no dobro da velocidade registrada no início do especial.
+     * Se os dois especiais estiverem ativos, vale o ativado por último.
+     */
+    private void aplicarDobroEspecial() {
+        Map<Bola, Double> base = null;
+        if (especial1Ativo) {
+            base = baseEspecial1;
+        } else if (especial2Ativo) {
+            base = baseEspecial2;
+        }
+        if (base == null || base.isEmpty()) {
+            return;
+        }
+        double teto = Bola.VELOCIDADE_MAXIMA;
+        for (Bola b : bolas) {
+            Double origem = base.get(b);
+            if (origem != null) {
+                b.ajustarVelocidade(Math.min(teto, origem * 2.0));
+            }
+        }
     }
 
     /** @return {@code true} se a bola deve aparecer em chamas (fogo visual) */
@@ -247,9 +327,13 @@ public class Pong {
             pontosDireita++;
         }
         trocaAtual = 0;
+        // O especial em andamento encerra no gol, mas a bateria carregada fica.
         especial1Ativo = false;
         especial2Ativo = false;
-        tempoEspecialRestante = 0;
+        tempoEspecial1 = 0;
+        tempoEspecial2 = 0;
+        baseEspecial1.clear();
+        baseEspecial2.clear();
 
         // Gol de ouro decide na hora.
         if (golDeOuro) {
@@ -287,6 +371,17 @@ public class Pong {
     private void registrarRebatida(int jogador) {
         trocaAtual++;
         melhorTroca = Math.max(melhorTroca, trocaAtual);
+
+        // Bateria do especial: recarrega a cada rebatida da própria raquete,
+        // mas não enquanto o próprio especial está ativo.
+        boolean ativo = jogador == 1 ? especial1Ativo : especial2Ativo;
+        if (!ativo) {
+            if (jogador == 1 && cargaEspecial1 < CARGAS_PARA_ESPECIAL) {
+                cargaEspecial1++;
+            } else if (jogador == 2 && cargaEspecial2 < CARGAS_PARA_ESPECIAL) {
+                cargaEspecial2++;
+            }
+        }
     }
 
     // ---------- Acessores para a interface ----------
@@ -341,12 +436,9 @@ public class Pong {
         return alvoPontos;
     }
 
-    public boolean isEspecial1Disponivel() {
-        return especial1Disponivel;
-    }
-
-    public boolean isEspecial2Disponivel() {
-        return especial2Disponivel;
+    /** Cargas atuais da bateria do especial (0 a {@link #CARGAS_PARA_ESPECIAL}). */
+    public int getCargaEspecial(int jogador) {
+        return jogador == 1 ? cargaEspecial1 : cargaEspecial2;
     }
 
     public boolean isEspecial1Ativo() {
@@ -357,8 +449,9 @@ public class Pong {
         return especial2Ativo;
     }
 
-    public double getTempoEspecialRestante() {
-        return tempoEspecialRestante;
+    /** Segundos restantes do especial ativo do jogador (0 se inativo). */
+    public double getTempoEspecialRestante(int jogador) {
+        return jogador == 1 ? tempoEspecial1 : tempoEspecial2;
     }
 
     public double getVelocidadeMaxima() {
