@@ -20,32 +20,29 @@ src/main/java/com/portfolio/pong/
 
 | # | Prioridade | Camada | Tarefa | Detalhes |
 |---|-----------|--------|--------|----------|
-| 1 | Alta | core | `Raquete` | Posição/tamanho, movimento, limites do campo |
-| 2 | Alta | core | `Bola` | Reflexão de parede (flip Y); ângulo por ponto de contato (±60°, clamp anti-180°); anti-sticking pós-rebote; +6% velocidade por rebatida (teto); rampa contínua conforme o tempo esgota |
-| 3 | Alta | core | `Computador` | IA batedível: velocidade limitada + reação atrasada + margem de erro; Fácil/Médio/Difícil |
-| 4 | Alta | core | `Cronometro` | Contagem MM:SS (durações 1/2/3 min), fim do tempo, estado de gol de ouro |
-| 5 | Alta | core | `Pong` | Estado: modo, placar, sacada alternada, fim de partida, stats (vel. máx, melhor troca) |
-| 6 | Alta | core | Fogo/Especial | `isBolaEmChamas()` automático por velocidade; `ativarEspecial()` (tecla, 1 uso por jogador: Z=P1, M=P2, 5s); visual-only |
-| 7 | Alta | skin | `Skin` + `CatalogoSkins` | 6 presets (Clássico, Neon, Retrô/fósforo, Oceano, Sunset, Floresta) + Personalizada (cores via JColorChooser + emoji/letra de bola/raquetes); persistência `~/.jogo-pong-skin.properties`; fallback Clássico; scanlines CRT só na Retrô |
-| 8 | Alta | fx | Partículas/animações | Motor de partículas (life/cor/fade); aura + rastro de fogo; marca de queimado persistente na mesa; explosão no gol + tremor; fundo animado sutil; confete na vitória |
-| 9 | Alta | ui | `TelaPong` — briefing | Card de início: modo, dificuldade, tempo/placar, skin com preview animado, controles |
-| 10 | Alta | ui | `TelaPong` — jogo | Placar futebol P1\|⏱\|P2 topo central, timer vermelho+piscando nos 10s finais, indicador do especial 🔥, countdown 3-2-1-JÁ, banner GOL!, saque rápido |
-| 11 | Alta | ui | `TelaPong` — pausa/fim | Pausa verdadeira (overlay Retomar/Reiniciar/Voltar); fim com stats (placar, duração, melhor troca, velocidade máxima) + Jogar novamente/Início |
-| 12 | Alta | audio | Efeitos sonoros | Bola/parede, gol, especial, fim de partida (padrão da Forca, com botão 🔊/🔇) |
-| 13 | Média | ui | Visual | Glassmorphism nos cards, glow de neon, redimensionável |
-| 14 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + `PongTest` cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, especial (1 uso), skins/persistência/fallback, fogo por velocidade |
-| 15 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
+| 1 | Alta | skin | `Skin` + `CatalogoSkins` | 6 presets (Clássico, Neon, Retrô/fósforo, Oceano, Sunset, Floresta) + Personalizada (cores via JColorChooser + emoji/letra de bola/raquetes); persistência `~/.jogo-pong-skin.properties`; fallback Clássico; scanlines CRT só na Retrô |
+| 2 | Alta | fx | Partículas/animações | Motor de partículas (life/cor/fade); aura + rastro de fogo; marca de queimado persistente na mesa; explosão no gol + tremor; fundo animado sutil; confete na vitória |
+| 3 | Alta | ui | `TelaPong` — briefing | Card de início: modo, dificuldade, tempo/placar, skin com preview animado, controles |
+| 4 | Alta | ui | `TelaPong` — jogo | Placar futebol P1\|⏱\|P2 topo central, timer vermelho+piscando nos 10s finais, indicador do especial 🔥, countdown 3-2-1-JÁ, banner GOL!, saque rápido |
+| 5 | Alta | ui | `TelaPong` — pausa/fim | Pausa verdadeira (overlay Retomar/Reiniciar/Voltar); fim com stats (placar, duração, melhor troca, velocidade máxima) + Jogar novamente/Início |
+| 6 | Alta | audio | Efeitos sonoros | Bola/parede, gol, especial, fim de partida (padrão da Forca, com botão 🔊/🔇) |
+| 7 | Média | ui | Visual | Glassmorphism nos cards, glow de neon, redimensionável |
+| 8 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + `PongTest` cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, especial (1 uso), skins/persistência/fallback, fogo por velocidade |
+| 9 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
 
 ## Fazendo (Doing)
 
-| # | Tarefa | Observações |
-|---|--------|-------------|
-| 1 | Scaffold do projeto | pom.xml, estrutura por camadas, git inicial — em andamento |
+_— vazio —_
 
 ## Feito (Done)
 
 - Scaffold do projeto (pom.xml, README, KANBAN, LICENSE, .gitignore, estrutura por camadas: core/skin/fx/audio/ui)
 - Repositório git inicializado com identidade configurada
+- **core**: `Raquete` — posição/tamanho, `moverCima`/`moverBaixo`, clamp nos limites do campo, `centralizar`, lado
+- **core**: `Bola` — reflexão de parede (flip Y), ângulo por ponto de contato (±60°, clamp), anti-sticking pós-rebote, +6% por rebatida (teto 800 px/s), `ajustarVelocidade` preservando ângulo, detecção de passe de lateral
+- **core**: `Computador` — IA batedível (velocidade limitada + reação atrasada + zona morta) com enum `Dificuldade` (Fácil/Médio/Difícil) e previsão de interceptação
+- **core**: `Cronometro` — durações 60/120/180s, contagem regressiva, `fatorDeUrgencia` (0→1), formato MM:SS
+- **core**: `Pong` — modos TEMPO e CLASSICO, placar, sacada alternada (quem sofreu saca), gol de ouro, especial (1 uso/jogador, 5s), `isBolaEmChamas()` por velocidade (≥540) ou especial, rampa de tempo (fator 0.8), stats (vel. máx, melhor troca), encerramento/vitorioso — validado por smoke test
 
 ## Regras (tomadas de decisão)
 
