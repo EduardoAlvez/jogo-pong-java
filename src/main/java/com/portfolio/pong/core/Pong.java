@@ -1,7 +1,10 @@
 package com.portfolio.pong.core;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Estado da partida de Pong: orquestra raquetes, bola, IA, cronômetro,
+ * Estado da partida de Pong: orquestra raquetes, bolas, IA, cronômetro,
  * placar, o especial de bola em chamas e as estatísticas da partida.
  *
  * <p>Núcleo puro (sem Swing): recebe apenas {@code dt} em segundos e expõe
@@ -38,7 +41,8 @@ public class Pong {
 
     private final Raquete raqueteEsquerda;
     private final Raquete raqueteDireita;
-    private final Bola bola;
+    /** Bolas em campo: a primeira ({@link #getBola()}) é a principal. */
+    private final List<Bola> bolas;
     private Computador computador;
 
     private Modo modo = Modo.CLASSICO;
@@ -76,7 +80,8 @@ public class Pong {
         this.alturaCampo = alturaCampo;
         this.raqueteEsquerda = new Raquete(30, (int) alturaCampo);
         this.raqueteDireita = new Raquete((int) (larguraCampo - 30 - Raquete.LARGURA), (int) alturaCampo);
-        this.bola = new Bola(larguraCampo, alturaCampo);
+        this.bolas = new ArrayList<>();
+        this.bolas.add(new Bola(larguraCampo, alturaCampo));
         this.cronometro = new Cronometro(Cronometro.DURACAO_2MIN);
     }
 
@@ -144,31 +149,33 @@ public class Pong {
             }
         }
 
-        // IA acompanha a bola.
+        // IA acompanha a bola principal.
         if (computador != null) {
-            computador.atualizar(bola, dt);
+            computador.atualizar(bolas.get(0), dt);
         }
 
-        // Física da bola: move, rebate nas paredes e nas raquetes.
+        // Física das bolas: move, rebate nas paredes e nas raquetes.
         bateuParedeNoFrame = false;
         bateuRaqueteNoFrame = false;
-        bola.mover(dt);
-        bateuParedeNoFrame = bola.rebaterParedes();
-        if (bola.rebaterNaRaquete(raqueteEsquerda)) {
-            bateuRaqueteNoFrame = true;
-            registrarRebatida();
+        for (Bola b : bolas) {
+            b.mover(dt);
+            bateuParedeNoFrame |= b.rebaterParedes();
+            if (b.rebaterNaRaquete(raqueteEsquerda)) {
+                bateuRaqueteNoFrame = true;
+                registrarRebatida(1);
+            }
+            if (b.rebaterNaRaquete(raqueteDireita)) {
+                bateuRaqueteNoFrame = true;
+                registrarRebatida(2);
+            }
+            velocidadeMaxima = Math.max(velocidadeMaxima, b.getVelocidade());
         }
-        if (bola.rebaterNaRaquete(raqueteDireita)) {
-            bateuRaqueteNoFrame = true;
-            registrarRebatida();
-        }
-        velocidadeMaxima = Math.max(velocidadeMaxima, bola.getVelocidade());
 
-        // Rampa de tempo: bola acelera conforme o cronômetro esgota.
+        // Rampa de tempo: a bola principal acelera conforme o cronômetro esgota.
         if (modo == Modo.TEMPO) {
             cronometro.atualizar(dt);
             double alvo = Bola.VELOCIDADE_BASE * (1.0 + FATOR_URGENCIA * cronometro.fatorDeUrgencia());
-            bola.ajustarVelocidade(Math.min(alvo, Bola.VELOCIDADE_MAXIMA));
+            bolas.get(0).ajustarVelocidade(Math.min(alvo, Bola.VELOCIDADE_MAXIMA));
 
             if (cronometro.acabou() && !golDeOuro) {
                 if (pontosEsquerda == pontosDireita) {
@@ -180,11 +187,15 @@ public class Pong {
             }
         }
 
-        // Gols.
-        if (bola.saiuPelaDireita()) {
-            marcarGol(1);
-        } else if (bola.saiuPelaEsquerda()) {
-            marcarGol(2);
+        // Gols: a primeira bola a cruzar a lateral decide o frame.
+        for (Bola b : bolas) {
+            if (b.saiuPelaDireita()) {
+                marcarGol(1);
+                break;
+            } else if (b.saiuPelaEsquerda()) {
+                marcarGol(2);
+                break;
+            }
         }
     }
 
@@ -215,7 +226,7 @@ public class Pong {
 
     /** @return {@code true} se a bola deve aparecer em chamas (fogo visual) */
     public boolean isBolaEmChamas() {
-        return especial1Ativo || especial2Ativo || bola.getVelocidade() >= LIMIAR_CHAMAS;
+        return especial1Ativo || especial2Ativo || bolas.get(0).getVelocidade() >= LIMIAR_CHAMAS;
     }
 
     /** Move a raquete de um jogador. */
@@ -261,7 +272,11 @@ public class Pong {
     private void sacar() {
         raqueteEsquerda.centralizar();
         raqueteDireita.centralizar();
-        bola.centralizar(larguraCampo / 2.0, alturaCampo / 2.0, sacaEsquerda ? 1 : -1);
+        // Remove bolas extras (prêmio de bola extra) e volta ao saque único.
+        while (bolas.size() > 1) {
+            bolas.remove(bolas.size() - 1);
+        }
+        bolas.get(0).centralizar(larguraCampo / 2.0, alturaCampo / 2.0, sacaEsquerda ? 1 : -1);
     }
 
     private void encerrar(int quemVenceu) {
@@ -269,7 +284,7 @@ public class Pong {
         vencedor = quemVenceu;
     }
 
-    private void registrarRebatida() {
+    private void registrarRebatida(int jogador) {
         trocaAtual++;
         melhorTroca = Math.max(melhorTroca, trocaAtual);
     }
@@ -285,7 +300,12 @@ public class Pong {
     }
 
     public Bola getBola() {
-        return bola;
+        return bolas.get(0);
+    }
+
+    /** @return todas as bolas em campo (a primeira é a principal) */
+    public List<Bola> getBolas() {
+        return bolas;
     }
 
     public Modo getModo() {

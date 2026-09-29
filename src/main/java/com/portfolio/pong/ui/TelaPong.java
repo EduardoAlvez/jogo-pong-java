@@ -188,8 +188,9 @@ public final class TelaPong {
                 }
 
                 if (pong.isBolaEmChamas()) {
-                    Bola bola = pong.getBola();
-                    animacoes.emitirFogo(bola.getX(), bola.getY());
+                    for (Bola bola : pong.getBolas()) {
+                        animacoes.emitirFogo(bola.getX(), bola.getY());
+                    }
                 }
 
                 if (pong.isEncerrado()) {
@@ -496,7 +497,7 @@ public final class TelaPong {
                     (int) (p.getRaio() * 2), (int) (p.getRaio() * 2));
         }
 
-        desenharBola(g2);
+        desenharBolas(g2);
 
         // rótulo central (gol de ouro)
         if (pong.isGolDeOuro()) {
@@ -541,8 +542,13 @@ public final class TelaPong {
         g2.fillRoundRect(r.getX(), r.getY(), Raquete.LARGURA, Raquete.ALTURA, 10, 10);
     }
 
-    private void desenharBola(Graphics2D g2) {
-        Bola bola = pong.getBola();
+    private void desenharBolas(Graphics2D g2) {
+        for (Bola bola : pong.getBolas()) {
+            desenharBola(g2, bola);
+        }
+    }
+
+    private void desenharBola(Graphics2D g2, Bola bola) {
         double r = bola.getRaio();
         int cx = (int) bola.getX();
         int cy = (int) bola.getY();
