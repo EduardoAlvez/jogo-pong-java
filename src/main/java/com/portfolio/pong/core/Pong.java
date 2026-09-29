@@ -284,6 +284,11 @@ public class Pong {
         return raqueteDireita;
     }
 
+    /** @return dificuldade configurada para a IA */
+    public Computador.Dificuldade getDificuldade() {
+        return dificuldadeCPU;
+    }
+
     public Bola getBola() {
         return bola;
     }

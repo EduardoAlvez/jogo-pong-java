@@ -62,7 +62,7 @@ public class Computador {
     public Computador(Raquete raquete, Dificuldade dificuldade) {
         this.raquete = raquete;
         this.dificuldade = dificuldade;
-        this.alvoY = raquete.getY();
+        this.alvoY = raquete.getCentroY();
         this.tempoAteProximaReacao = dificuldade.reacaoSegundos;
     }
 
