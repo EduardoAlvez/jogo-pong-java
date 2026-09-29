@@ -5,6 +5,7 @@ import com.portfolio.pong.core.Bola;
 import com.portfolio.pong.core.Computador;
 import com.portfolio.pong.core.Cronometro;
 import com.portfolio.pong.core.Pong;
+import com.portfolio.pong.core.Premio;
 import com.portfolio.pong.core.Raquete;
 import com.portfolio.pong.fx.Animacoes;
 import com.portfolio.pong.fx.Particula;
@@ -174,6 +175,11 @@ public final class TelaPong {
                 }
                 if (pong.bateuRaqueteNoFrame()) {
                     som(EfeitosSonoros.Som.REBATER);
+                }
+                if (pong.coletouPremioNoFrame()) {
+                    som(EfeitosSonoros.Som.PREMIO);
+                    animacoes.coletarPremio(pong.getPremioColetadoX(), pong.getPremioColetadoY(),
+                            new Color(pong.getPremioColetadoCor()));
                 }
 
                 int p1 = pong.getPontosEsquerda();
@@ -484,6 +490,9 @@ public final class TelaPong {
         g2.drawRect(0, 0, areaGol, FH);
         g2.drawRect(FW - areaGol, 0, areaGol, FH);
 
+        // prêmio no campo (card "?" que sobe do gramado)
+        desenharPremio(g2);
+
         // raquetes (com brilho quando o especial está ativo)
         desenharRaquete(g2, pong.getRaqueteEsquerda(), s.getCorRaquete1(), pong.isEspecial1Ativo());
         desenharRaquete(g2, pong.getRaqueteDireita(), s.getCorRaquete2(), pong.isEspecial2Ativo());
@@ -540,6 +549,42 @@ public final class TelaPong {
         }
         g2.setColor(cor);
         g2.fillRoundRect(r.getX(), r.getY(), Raquete.LARGURA, Raquete.ALTURA, 10, 10);
+    }
+
+    // prêmio no campo: card "?" que sobe do gramado, pulsa e some ao expirar
+    private void desenharPremio(Graphics2D g2) {
+        Premio premio = pong.getPremio();
+        if (premio == null) {
+            return;
+        }
+        Color cor = new Color(premio.getTipo().getCorRgb());
+        int r = (int) Premio.RAIO;
+        int cx = (int) premio.getX();
+        // sobe do gramado nos primeiros 0.4s
+        double entrada = Math.min(1.0, premio.getTempoDeVida() / 0.4);
+        int cy = (int) (premio.getY() + (1.0 - entrada) * 26);
+        // pulso normal; acelera quando está prestes a sumir
+        double freq = premio.getTempoRestante() < 2.5 ? 14.0 : 5.0;
+        double pulso = 1.0 + 0.12 * Math.sin(premio.getTempoDeVida() * freq);
+
+        // halo
+        int aura = (int) (r * 1.9 * pulso);
+        g2.setColor(new Color(cor.getRed(), cor.getGreen(), cor.getBlue(), 60));
+        g2.fillOval(cx - aura, cy - aura, aura * 2, aura * 2);
+
+        // card
+        g2.setColor(new Color(0x1B, 0x1B, 0x2A, 220));
+        g2.fillRoundRect(cx - r, cy - r, r * 2, r * 2, 8, 8);
+        g2.setStroke(new BasicStroke(2.5f));
+        g2.setColor(cor);
+        g2.drawRoundRect(cx - r, cy - r, r * 2, r * 2, 8, 8);
+
+        // ícone: "?" durante a entrada, depois o símbolo do prêmio
+        g2.setFont(new Font("Arial", Font.BOLD, 16));
+        g2.setColor(Color.WHITE);
+        String rotulo = entrada < 0.99 ? "?" : premio.getTipo().getRotulo();
+        int larg = g2.getFontMetrics().stringWidth(rotulo);
+        g2.drawString(rotulo, cx - larg / 2, cy + 6);
     }
 
     private void desenharBolas(Graphics2D g2) {

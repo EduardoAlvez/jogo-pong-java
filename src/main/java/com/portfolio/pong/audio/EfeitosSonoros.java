@@ -25,6 +25,7 @@ public final class EfeitosSonoros {
         PAREDE("/sons/parede.wav"),
         GOL("/sons/gol.wav"),
         ESPECIAL("/sons/especial.wav"),
+        PREMIO("/sons/premio.wav"),
         CLIQUE("/sons/clique.wav"),
         VITORIA("/sons/vitoria.wav");
 

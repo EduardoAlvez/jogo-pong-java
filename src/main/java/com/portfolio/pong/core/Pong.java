@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Estado da partida de Pong: orquestra raquetes, bolas, IA, cronômetro,
@@ -40,6 +41,13 @@ public class Pong {
 
     /** Fator extra aplicado à velocidade quando o tempo chega a zero. */
     public static final double FATOR_URGENCIA = 0.8;
+
+    /** Primeiro prêmio surge após esse tempo de partida (segundos). */
+    public static final double PRIMEIRO_SPAWN_PREMIO = 8.0;
+
+    /** Intervalo aleatório entre prêmios, em segundos: {@code [MIN, MAX]}. */
+    public static final double INTERVALO_SPAWN_PREMIO_MIN = 10.0;
+    public static final double INTERVALO_SPAWN_PREMIO_MAX = 16.0;
 
     private final double larguraCampo;
     private final double alturaCampo;
@@ -79,6 +87,19 @@ public class Pong {
 
     private boolean bateuParedeNoFrame;
     private boolean bateuRaqueteNoFrame;
+
+    // Prêmios no campo.
+    private final Random aleatorio = new Random();
+    private Premio premio;
+    private double tempoProximoSpawn;
+    /** Último jogador que rebateu a bola (é quem coleta o prêmio). */
+    private int ultimoRebatedor;
+    private boolean premioColetadoFrame;
+    private double premioColetadoX;
+    private double premioColetadoY;
+    private int premioColetadoCor;
+    private int premios1;
+    private int premios2;
 
     /**
      * @param larguraCampo largura do campo em pixels
@@ -134,6 +155,12 @@ public class Pong {
         trocaAtual = 0;
         raqueteEsquerda.centralizar();
         raqueteDireita.centralizar();
+        premio = null;
+        tempoProximoSpawn = PRIMEIRO_SPAWN_PREMIO;
+        ultimoRebatedor = 0;
+        premioColetadoFrame = false;
+        premios1 = 0;
+        premios2 = 0;
         if (computador != null) {
             computador = new Computador(raqueteDireita, dificuldadeCPU);
         }
@@ -151,6 +178,7 @@ public class Pong {
             return;
         }
 
+        premioColetadoFrame = false;
         // Especiais em andamento expiram (timer próprio por jogador).
         if (especial1Ativo) {
             tempoEspecial1 -= dt;
@@ -208,6 +236,9 @@ public class Pong {
 
         // Durante o especial, a bola mantém o dobro da velocidade que tinha.
         aplicarDobroEspecial();
+
+        // Prêmios: expiram o atual e podem surgir novos; coleta pela bola.
+        atualizarPremio(dt);
 
         // Gols: a primeira bola a cruzar a lateral decide o frame.
         for (Bola b : bolas) {
@@ -371,6 +402,7 @@ public class Pong {
     private void registrarRebatida(int jogador) {
         trocaAtual++;
         melhorTroca = Math.max(melhorTroca, trocaAtual);
+        ultimoRebatedor = jogador;
 
         // Bateria do especial: recarrega a cada rebatida da própria raquete,
         // mas não enquanto o próprio especial está ativo.
@@ -381,6 +413,90 @@ public class Pong {
             } else if (jogador == 2 && cargaEspecial2 < CARGAS_PARA_ESPECIAL) {
                 cargaEspecial2++;
             }
+        }
+    }
+
+// ---------- Prêmios no campo ----------
+
+    /** Gerencia o prêmio do campo e detecta a coleta pela bola. */
+    private void atualizarPremio(double dt) {
+        if (golDeOuro) {
+            return;
+        }
+        if (premio == null) {
+            tempoProximoSpawn -= dt;
+            if (tempoProximoSpawn <= 0.0) {
+                criarPremio();
+            }
+            return;
+        }
+
+        premio.atualizar(dt);
+        if (premio.acabou()) {
+            premio = null;
+            agendarProximoSpawn();
+            return;
+        }
+
+        for (Bola b : bolas) {
+            double dx = b.getX() - premio.getX();
+            double dy = b.getY() - premio.getY();
+            if (Math.hypot(dx, dy) > b.getRaio() + Premio.RAIO) {
+                continue;
+            }
+            Premio.Tipo tipo = premio.getTipo();
+            double x = premio.getX();
+            double y = premio.getY();
+            int cor = tipo.getCorRgb();
+            // Sem rebatedor ainda (bola do saque tocou o prêmio): quem "vai buscar"
+            // é o lado para onde a bola está indo.
+            int coletor = ultimoRebatedor != 0 ? ultimoRebatedor : (b.getVx() > 0 ? 1 : 2);
+            premio = null;
+            agendarProximoSpawn();
+            coletarPremio(tipo, coletor, x, y, cor);
+            break;
+        }
+    }
+
+    private void criarPremio() {
+        List<Premio.Tipo> pool = tiposDePremio();
+        Premio.Tipo tipo = pool.get(aleatorio.nextInt(pool.size()));
+        double x = 70 + aleatorio.nextDouble() * (larguraCampo - 140);
+        double y = 80 + aleatorio.nextDouble() * (alturaCampo - 160);
+        premio = new Premio(tipo, x, y);
+    }
+
+    /** Agenda o próximo prêmio entre {@code [MIN, MAX]} segundos. */
+    private void agendarProximoSpawn() {
+        tempoProximoSpawn = INTERVALO_SPAWN_PREMIO_MIN
+                + aleatorio.nextDouble() * (INTERVALO_SPAWN_PREMIO_MAX - INTERVALO_SPAWN_PREMIO_MIN);
+    }
+
+    /** Tipos elegíveis para o modo atual: sem INVERTE em 1P, sem TEMPO no clássico. */
+    List<Premio.Tipo> tiposDePremio() {
+        List<Premio.Tipo> pool = new ArrayList<>();
+        for (Premio.Tipo t : Premio.Tipo.values()) {
+            if (t == Premio.Tipo.INVERTE && !isDoisJogadores()) {
+                continue;
+            }
+            if (t == Premio.Tipo.TEMPO && modo != Modo.TEMPO) {
+                continue;
+            }
+            pool.add(t);
+        }
+        return pool;
+    }
+
+    /** Registra a coleta (efeito aplicado em {@link #aplicarPremio}). */
+    private void coletarPremio(Premio.Tipo tipo, int coletor, double x, double y, int cor) {
+        premioColetadoFrame = true;
+        premioColetadoX = x;
+        premioColetadoY = y;
+        premioColetadoCor = cor;
+        if (coletor == 1) {
+            premios1++;
+        } else {
+            premios2++;
         }
     }
 
@@ -472,6 +588,39 @@ public class Pong {
 
     public double getAlturaCampo() {
         return alturaCampo;
+    }
+
+        /** @return o prêmio atualmente no campo, ou {@code null} se não há */
+    public Premio getPremio() {
+        return premio;
+    }
+
+    /** @return segundos restantes do prêmio em campo (0 se não há) */
+    public double getPremioRestante() {
+        return premio == null ? 0.0 : premio.getTempoRestante();
+    }
+
+    /** @return {@code true} se um prêmio foi coletado neste frame */
+    public boolean coletouPremioNoFrame() {
+        return premioColetadoFrame;
+    }
+
+    public double getPremioColetadoX() {
+        return premioColetadoX;
+    }
+
+    public double getPremioColetadoY() {
+        return premioColetadoY;
+    }
+
+    /** @return cor RGB do prêmio coletado neste frame */
+    public int getPremioColetadoCor() {
+        return premioColetadoCor;
+    }
+
+    /** @return quantos prêmios o jogador já coletou */
+    public int getPremios(int jogador) {
+        return jogador == 1 ? premios1 : premios2;
     }
 
     /** @return {@code true} se a bola rebateu na parede neste frame */

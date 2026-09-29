@@ -105,6 +105,18 @@ public class Animacoes {
         }
     }
 
+    /** Rajada de brilho quando a bola coleta um prêmio. */
+    public void coletarPremio(double x, double y, Color cor) {
+        int quantidade = 26;
+        for (int i = 0; i < quantidade; i++) {
+            double angulo = aleatorio.nextDouble() * 2 * Math.PI;
+            double velocidade = 30 + aleatorio.nextDouble() * 130;
+            adicionar(new Particula(x, y,
+                    Math.cos(angulo) * velocidade, Math.sin(angulo) * velocidade - 30,
+                    cor, 2 + aleatorio.nextDouble() * 3, 0.35 + aleatorio.nextDouble() * 0.35));
+        }
+    }
+
     /** Registra um tremor de tela (magnitude em pixels). */
     public void adicionarTremor(double magnitude) {
         tremor = Math.max(tremor, magnitude);
