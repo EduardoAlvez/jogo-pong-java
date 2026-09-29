@@ -707,7 +707,7 @@ public final class TelaPong {
 
         // card "glassmorphism" central
         int cardW = Math.min(w - 40, 560);
-        int cardH = Math.min(h - 130, 390);
+        int cardH = Math.min(h - 130, 430);
         int cardX = (w - cardW) / 2;
         int cardY = 96;
         g2.setColor(new Color(255, 255, 255, 26));
@@ -717,7 +717,7 @@ public final class TelaPong {
         g2.draw(new RoundRectangle2D.Double(cardX, cardY, cardW, cardH, 24, 24));
 
         int pad = 26;
-        int rotuloY = cardY + 26;
+        int rotuloY = cardY + 30;
 
         // modo
         int colsModo = 2;
@@ -735,7 +735,7 @@ public final class TelaPong {
                         som(EfeitosSonoros.Som.CLIQUE);
                     });
         }
-        rotuloY += 48;
+        rotuloY += 58;
 
         // jogadores / dificuldade
         if (!doisJogadores) {
@@ -753,7 +753,7 @@ public final class TelaPong {
                             som(EfeitosSonoros.Som.CLIQUE);
                         });
             }
-            rotuloY += 48;
+            rotuloY += 58;
         }
 
         // segundo seletor: tempo ou alvo
@@ -771,7 +771,7 @@ public final class TelaPong {
                             som(EfeitosSonoros.Som.CLIQUE);
                         });
             }
-            rotuloY += 48;
+            rotuloY += 58;
         } else {
             rotuloY = secaoRotulo(g2, rotuloY, cardX + pad, "Quem chegar primeiro a");
             String[] alvos = {"5", "7", "10"};
@@ -786,7 +786,7 @@ public final class TelaPong {
                             som(EfeitosSonoros.Som.CLIQUE);
                         });
             }
-            rotuloY += 48;
+            rotuloY += 58;
         }
 
         // 2P local: torna o seletor de dificuldade/direto em botão 2P
@@ -797,7 +797,7 @@ public final class TelaPong {
                     doisJogadores = !doisJogadores;
                     som(EfeitosSonoros.Som.CLIQUE);
                 });
-        rotuloY += 34;
+        rotuloY += 50;
 
         // skins
         rotuloY = secaoRotulo(g2, rotuloY, cardX + pad, "Skin");
@@ -806,7 +806,7 @@ public final class TelaPong {
                 delta -> cicloSkin(nomes, delta));
         piscar(g2, "Personalizar...", cardX + pad + 180, rotuloY + 4, 130, 26, false,
                 this::personalizarSkin);
-        rotuloY += 40;
+        rotuloY += 62;
 
         // som + jogar
         somLigado = EfeitosSonoros.isLigado();
@@ -824,7 +824,7 @@ public final class TelaPong {
         jogar.selecionado = true;
         jogar.ativo = true;
 
-        rotuloY += 48;
+        rotuloY += 58;
         g2.setFont(new Font("Arial", Font.PLAIN, 12));
         g2.setColor(new Color(255, 255, 255, 150));
         String controles = "W/S — Jogador 1 · ↑/↓ — Jogador 2 · Z/M — Bola de fogo · Espaço — Pausa";
@@ -833,10 +833,10 @@ public final class TelaPong {
     }
 
     private int secaoRotulo(Graphics2D g2, int y, int x, String texto) {
-        g2.setFont(new Font("Arial", Font.BOLD, 13));
-        g2.setColor(new Color(255, 255, 255, 170));
+        g2.setFont(new Font("Arial", Font.BOLD, 14));
+        g2.setColor(new Color(255, 255, 255, 200));
         g2.drawString(texto, x, y);
-        return y + 4;
+        return y + 8;
     }
 
     private int[] espacar(int x, int largura, int n, int folga) {
@@ -897,7 +897,7 @@ public final class TelaPong {
         g2.setFont(new Font("Arial", Font.BOLD, 13));
         g2.setColor(b.selecionado ? new Color(0x161C28) : Color.WHITE);
         int larg = g2.getFontMetrics().stringWidth(b.texto);
-        g2.drawString(b.texto, b.x + (b.w - larg) / 2, b.y + 18);
+        g2.drawString(b.texto, b.x + (b.w - larg) / 2, b.y + b.h / 2 + 5);
     }
 
     private void cicloSkin(String[] nomes, int delta) {
