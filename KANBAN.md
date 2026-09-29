@@ -20,15 +20,13 @@ src/main/java/com/portfolio/pong/
 
 | # | Prioridade | Camada | Tarefa | Detalhes |
 |---|-----------|--------|--------|----------|
-| 1 | Alta | skin | `Skin` + `CatalogoSkins` | 6 presets (Clássico, Neon, Retrô/fósforo, Oceano, Sunset, Floresta) + Personalizada (cores via JColorChooser + emoji/letra de bola/raquetes); persistência `~/.jogo-pong-skin.properties`; fallback Clássico; scanlines CRT só na Retrô |
-| 2 | Alta | fx | Partículas/animações | Motor de partículas (life/cor/fade); aura + rastro de fogo; marca de queimado persistente na mesa; explosão no gol + tremor; fundo animado sutil; confete na vitória |
-| 3 | Alta | ui | `TelaPong` — briefing | Card de início: modo, dificuldade, tempo/placar, skin com preview animado, controles |
-| 4 | Alta | ui | `TelaPong` — jogo | Placar futebol P1\|⏱\|P2 topo central, timer vermelho+piscando nos 10s finais, indicador do especial 🔥, countdown 3-2-1-JÁ, banner GOL!, saque rápido |
-| 5 | Alta | ui | `TelaPong` — pausa/fim | Pausa verdadeira (overlay Retomar/Reiniciar/Voltar); fim com stats (placar, duração, melhor troca, velocidade máxima) + Jogar novamente/Início |
-| 6 | Alta | audio | Efeitos sonoros | Bola/parede, gol, especial, fim de partida (padrão da Forca, com botão 🔊/🔇) |
-| 7 | Média | ui | Visual | Glassmorphism nos cards, glow de neon, redimensionável |
-| 8 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + `PongTest` cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, especial (1 uso), skins/persistência/fallback, fogo por velocidade |
-| 9 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
+| 1 | Alta | ui | `TelaPong` — briefing | Card de início: modo, dificuldade, tempo/placar, skin com preview animado, controles |
+| 2 | Alta | ui | `TelaPong` — jogo | Placar futebol P1\|⏱\|P2 topo central, timer vermelho+piscando nos 10s finais, indicador do especial 🔥, countdown 3-2-1-JÁ, banner GOL!, saque rápido |
+| 3 | Alta | ui | `TelaPong` — pausa/fim | Pausa verdadeira (overlay Retomar/Reiniciar/Voltar); fim com stats (placar, duração, melhor troca, velocidade máxima) + Jogar novamente/Início |
+| 4 | Média | ui | Visual | Glassmorphism nos cards, glow de neon, redimensionável |
+| 5 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + `PongTest` cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, especial (1 uso), skins/persistência/fallback, fogo por velocidade |
+| 6 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
+| 7 | Média | (branch) | Sons: reproduzir OK em build | Confirmar que os `.wav` entram no `.jar` e tocam via `mvn package` + `java -jar` |
 
 ## Fazendo (Doing)
 
@@ -43,6 +41,12 @@ _— vazio —_
 - **core**: `Computador` — IA batedível (velocidade limitada + reação atrasada + zona morta) com enum `Dificuldade` (Fácil/Médio/Difícil) e previsão de interceptação
 - **core**: `Cronometro` — durações 60/120/180s, contagem regressiva, `fatorDeUrgencia` (0→1), formato MM:SS
 - **core**: `Pong` — modos TEMPO e CLASSICO, placar, sacada alternada (quem sofreu saca), gol de ouro, especial (1 uso/jogador, 5s), `isBolaEmChamas()` por velocidade (≥540) ou especial, rampa de tempo (fator 0.8), stats (vel. máx, melhor troca), encerramento/vitorioso — validado por smoke test
+- **skin**: `Skin` — dados visuais (campo/linha/borda/raquetes/bola/queimado, rótulo da bola, scanlines CRT)
+- **skin**: `CatalogoSkins` — 6 presets (Clássico, Neon, Retrô, Oceano, Sunset, Floresta) + Personalizada; persistência `~/.jogo-pong-skin.properties`; fallback Clássico; `toHex`/`parseColor` — validado por smoke test de seleção/aplicação/reabertura
+- **fx**: `Particula` — posição, velocidade, cor, tamanho, vida com fade (`getAlpha`)
+- **fx**: `Animacoes` — `emitirFogo` (chamas + marca de queimado persistente, limite 250), `explosaoGol` (40 partículas + tremor), `confete`, `adicionarTremor`/decaimento, `limpar`, limite de 400 partículas — validado por smoke test
+- **audio**: `EfeitosSonoros` — mesmo padrão da Forca (enum `Som`, carga preguiçosa, cache de `Clip`, ganho −9 dB, interruptor global)
+- **audio**: 6 `.wav` sintetizados (PCM 16-bit 44.1kHz mono) em `src/main/resources/sons/` — rebater, parede, gol, especial, clique, vitoria — validados por `AudioSystem` (carregamento pelo classpath)
 
 ## Regras (tomadas de decisão)
 
