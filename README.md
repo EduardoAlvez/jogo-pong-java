@@ -55,8 +55,8 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
 
 ```bash
 mkdir -p out
-javac -encoding UTF-8 -d out src/main/java/com/portfolio/pong/*.java
-java -cp out com.portfolio.pong.TelaPong
+javac -encoding UTF-8 -d out $(find src/main/java -name "*.java")
+java -cp out com.portfolio.pong.ui.TelaPong
 ```
 
 ### Opção 2 — Maven
@@ -67,7 +67,7 @@ mvn clean compile exec:java
 
 ### Opção 3 — IDE
 Abra como projeto Maven no IntelliJ IDEA ou Eclipse e execute
-`com.portfolio.pong.TelaPong`.
+`com.portfolio.pong.ui.TelaPong`.
 
 ---
 
@@ -92,32 +92,40 @@ jogo-pong/
 ├── KANBAN.md                                # Quadro de tarefas do projeto
 ├── src/
 │   ├── main/java/com/portfolio/pong/
-│   │   ├── Bola.java                        # Física da bola (ângulos, aceleração, teto)
-│   │   ├── Raquete.java                     # Movimento e limites
-│   │   ├── Computador.java                  # IA batedível (3 dificuldades)
-│   │   ├── Cronometro.java                  # Temporizador dos modos Tempo/gol de ouro
-│   │   ├── Pong.java                        # Estado: modo, placar, especial, stats
-│   │   ├── Skin.java                        # Dados visuais (cores, formato, emoji)
-│   │   ├── CatalogoSkins.java               # Presets + persistência da personalizada
-│   │   ├── Particula.java                   # Partícula do motor de animação
-│   │   ├── Animacoes.java                   # Fogo, rastro de queimado, explosão, tremor
-│   │   ├── EfeitosSonoros.java              # Sons .wav (bola, gol, especial...)
-│   │   └── TelaPong.java                    # Interface Swing completa
+│   │   ├── core/                            # Núcleo puro e testável (sem Swing)
+│   │   │   ├── Bola.java                    # Física da bola (ângulos, aceleração, teto)
+│   │   │   ├── Raquete.java                 # Movimento e limites
+│   │   │   ├── Computador.java              # IA batedível (3 dificuldades)
+│   │   │   ├── Cronometro.java              # Temporizador dos modos Tempo/gol de ouro
+│   │   │   └── Pong.java                    # Estado: modo, placar, especial, stats
+│   │   ├── skin/                            # Dados visuais e catálogo
+│   │   │   ├── Skin.java                    # Cores, formato, emoji
+│   │   │   └── CatalogoSkins.java           # Presets + persistência da personalizada
+│   │   ├── fx/                              # Efeitos e animações
+│   │   │   ├── Particula.java               # Partícula do motor de animação
+│   │   │   └── Animacoes.java               # Fogo, queimado na mesa, explosão, tremor
+│   │   ├── audio/                           # Efeitos sonoros
+│   │   │   └── EfeitosSonoros.java          # Sons .wav (bola, gol, especial...)
+│   │   └── ui/                              # Interface gráfica Swing
+│   │       └── TelaPong.java                # Briefing, jogo, pausa, fim, HUD
+│   │   └── resources/sons/                  # Arquivos .wav
 │   └── ...
 └── out/                                     # Saída da compilação manual (ignorada no git)
 ```
 
 ### Principais classes
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `Bola` | Posição/velocidade, reflexões, ângulo por ponto de contato, aceleração |
-| `Computador` | IA com velocidade limitada, reação e margem de erro |
-| `Cronometro` | Contagem regressiva, fim de tempo e gol de ouro |
-| `Pong` | Estado do jogo: modo, placar, sacada, especial e estatísticas |
-| `Skin` / `CatalogoSkins` | Paleta e formato do jogo, presets e skin personalizada persistida |
-| `Animacoes` | Motor de partículas: fogo, queimado na mesa, explosão, confete |
-| `TelaPong` | Interface: briefing, jogo, pausa, fim, HUD, placar e relógio |
+| Classe | Camada | Responsabilidade |
+|--------|--------|------------------|
+| `core.Bola` | core | Posição/velocidade, reflexões, ângulo por ponto de contato, aceleração |
+| `core.Raquete` | core | Movimento e limites da raquete |
+| `core.Computador` | core | IA com velocidade limitada, reação e margem de erro |
+| `core.Cronometro` | core | Contagem regressiva, fim de tempo e gol de ouro |
+| `core.Pong` | core | Estado do jogo: modo, placar, sacada, especial e estatísticas |
+| `skin.Skin` / `skin.CatalogoSkins` | skin | Paleta e formato do jogo, presets e skin personalizada persistida |
+| `fx.Animacoes` | fx | Motor de partículas: fogo, queimado na mesa, explosão, confete |
+| `audio.EfeitosSonoros` | audio | Sons .wav com mudo global |
+| `ui.TelaPong` | ui | Interface: briefing, jogo, pausa, fim, HUD, placar e relógio |
 
 ---
 
@@ -146,7 +154,7 @@ jogo-pong/
 
 ## 📌 Roadmap (Kanban)
 
-- [x] Scaffold do projeto (pom.xml, README, KANBAN, LICENSE)
+- [x] Scaffold do projeto (pom.xml, README, KANBAN, LICENSE, estrutura por camadas)
 - [ ] Núcleo: Raquete / Bola / Computador / Cronometro / Pong
 - [ ] Especial bola de fogo + queimado na mesa
 - [ ] Skins (presets + personalizada persistida)
