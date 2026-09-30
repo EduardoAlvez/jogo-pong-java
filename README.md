@@ -133,7 +133,9 @@ jogo-pong/
 │   │   │   └── EfeitosSonoros.java          # Sons .wav (bola, gol, especial...)
 │   │   └── ui/                              # Interface gráfica Swing
 │   │       └── TelaPong.java                # Briefing, jogo, pausa, fim, HUD
-│   ├── main/resources/sons/                 # Arquivos .wav sintetizados
+│   ├── main/resources/
+│   │   ├── logo-{16,24,32,48,64,128,256}.png  # Ícone da janela, uma por resolução
+│   │   └── sons/                             # Arquivos .wav sintetizados
 │   └── ...
 └── out/                                     # Saída da compilação manual (ignorada no git)
 ```

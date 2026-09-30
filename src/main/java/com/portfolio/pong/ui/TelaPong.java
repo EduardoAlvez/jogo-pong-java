@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.KeyEvent;
@@ -18,9 +19,12 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
@@ -70,6 +74,13 @@ public final class TelaPong {
 
     /** Passo de tempo fixo da simulação (segundos por tick). */
     private static final double DT = TICK_MS / 1000.0;
+
+    /**
+     * Resoluções do ícone da janela, da menor para a maior. O Windows escolhe a
+     * que serve em cada contexto (barra de tarefas, Alt+Tab, título) em vez de
+     * escalar uma única imagem e borrar o logo.
+     */
+    private static final int[] TAMANHOS_ICONE = { 16, 24, 32, 48, 64, 128, 256 };
 
     private enum Fase { BRIEFING, CONTAGEM, JOGANDO, PAUSA, FIM }
 
@@ -1291,10 +1302,38 @@ public final class TelaPong {
 
     // ------------------------------------------------------------ Launcher
 
+    /**
+     * Carrega o logo da aplicação do classpath, uma imagem por resolução.
+     *
+     * @return ícones prontos para {@code setIconImages}; lista vazia se nenhum
+     *         arquivo estiver presente, o que deixa o ícone padrão do Java
+     */
+    private static List<Image> carregarIcones() {
+        List<Image> icones = new ArrayList<>();
+        for (int lado : TAMANHOS_ICONE) {
+            try (InputStream in = TelaPong.class.getResourceAsStream("/logo-" + lado + ".png")) {
+                if (in == null) {
+                    continue;
+                }
+                Image imagem = ImageIO.read(in);
+                if (imagem != null) {
+                    icones.add(imagem);
+                }
+            } catch (IOException | RuntimeException ignorada) {
+                // Sem o PNG de uma resolução seguimos com as demais.
+            }
+        }
+        return icones;
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("PONG");
             TelaPong jogo = new TelaPong();
+            List<Image> icones = carregarIcones();
+            if (!icones.isEmpty()) {
+                frame.setIconImages(icones);
+            }
             frame.setContentPane(jogo.getPainel());
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.pack();
