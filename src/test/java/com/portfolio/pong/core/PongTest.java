@@ -28,15 +28,50 @@ public class PongTest {
         pong.configurar(Pong.Modo.CLASSICO, Computador.Dificuldade.MEDIO, true, 5, 120);
     }
 
+    /** Deixa a pausa pós-gol terminar, para o saque acontecer. */
+    private void avancarAteSacar() {
+        for (int i = 0; i < 200 && pong.isAguardandoSaque(); i++) {
+            pong.atualizar(DT);
+        }
+    }
+
+    /**
+     * Reenvia a bola na direção da raquete do jogador até completar
+     * {@code quadros}, garantindo rebatidas (cada uma vale +1 de bateria).
+     */
+    private void jogarRebatendo(int jogador, int quadros) {
+        Raquete alvo = jogador == 1 ? pong.getRaqueteEsquerda() : pong.getRaqueteDireita();
+        int dir = jogador == 1 ? -1 : 1;
+        for (int i = 0; i < quadros; i++) {
+            if (pong.isAguardandoSaque()) {
+                avancarAteSacar();
+            }
+            if (Math.signum(pong.getBola().getVx()) != dir) {
+                alvo.setY((int) (ALTURA / 2.0 - Raquete.ALTURA / 2.0));
+                pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, dir);
+            }
+            pong.atualizar(DT);
+        }
+    }
+
+    /** Enche a bateria do especial do jogador (3 cargas). */
+    private void carregarBateria(int jogador) {
+        jogarRebatendo(jogador, 6000);
+        assertEquals("a bateria deveria ter encherdo",
+                Pong.CARGAS_PARA_ESPECIAL, pong.getCargaEspecial(jogador));
+    }
+
     /** Bola disparada em linha reta para a direita, com a raquete direita
      *  afastada do caminho: sai pela lateral e o jogador da esquerda marca. */
     private void forcarGolDaEsquerda() {
+        avancarAteSacar();
         pong.getRaqueteDireita().setY(0);
         pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, 1);
         int alvo = pong.getPontosEsquerda() + 1;
         for (int i = 0; i < 500 && pong.getPontosEsquerda() < alvo; i++) {
             pong.atualizar(DT);
         }
+        avancarAteSacar();
     }
 
     // ------------------------------------------------------------ Setup
@@ -88,6 +123,7 @@ public class PongTest {
 
     @Test
     public void golDaDireitaSacaParaDireita() {
+        avancarAteSacar();
         // Bola para fora pela esquerda → ponto do jogador 2.
         pong.getRaqueteEsquerda().setY(0);
         pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, -1);
@@ -95,6 +131,7 @@ public class PongTest {
         for (int i = 0; i < 500 && pong.getPontosDireita() < alvo; i++) {
             pong.atualizar(DT);
         }
+        avancarAteSacar();
         assertEquals(1, pong.getPontosDireita());
         assertTrue("P1 sofreu, P2 saca para a direita", pong.getBola().getVx() > 0);
     }
@@ -177,22 +214,48 @@ public class PongTest {
     // ----------------------------------------------------------- Especial
 
     @Test
-    public void especialSoPodeSerUsadoUmaVez() {
+    public void especialExigeBateriaCheiaERecarregaNaRabatida() {
+        // Começa sem carga: só libera depois de 3 rebatidas da própria raquete.
+        assertEquals(0, pong.getCargaEspecial(1));
+        assertFalse("sem bateria, não usa", pong.usarEspecial(1));
+
+        carregarBateria(1);
+        int carga2Antes = pong.getCargaEspecial(2);
         assertTrue(pong.usarEspecial(1));
-        assertFalse(pong.usarEspecial(1));
-        assertTrue("jogador 2 tem o próprio uso", pong.usarEspecial(2));
-        assertFalse(pong.usarEspecial(2));
+        assertEquals("uso zera a bateria", 0, pong.getCargaEspecial(1));
+        assertEquals("cada jogador tem a própria bateria",
+                carga2Antes, pong.getCargaEspecial(2));
+        assertFalse("sem carga, não usa de novo", pong.usarEspecial(1));
+    }
+
+    @Test
+    public void especialNaoRecarregaComRabatidaDaPropriaEnquantoAtivo() {
+        carregarBateria(1);
+        assertTrue(pong.usarEspecial(1));
+        assertEquals(0, pong.getCargaEspecial(1));
+
+        // Mesmo continued rebatendo na própria raquete, a carga não sobe.
+        jogarRebatendo(1, (int) (Pong.DURACAO_ESPECIAL / DT));
+        assertEquals("não carrega durante o próprio especial", 0, pong.getCargaEspecial(1));
+        assertTrue(pong.isEspecial1Ativo());
     }
 
     @Test
     public void especialAtivaBolaEmChamasEDecai() {
         assertFalse(pong.isBolaEmChamas());
-        pong.usarEspecial(1);
+        carregarBateria(1);
+        assertTrue(pong.usarEspecial(1));
         assertTrue(pong.isEspecial1Ativo());
         assertTrue(pong.isBolaEmChamas());
 
-        // Passa o tempo além da duração do especial (5s).
-        for (int i = 0; i < (int) (Pong.DURACAO_ESPECIAL / DT) + 10; i++) {
+        // Passa o tempo além da duração do especial (5s). Reenvia a bola a cada
+        // quadro para a velocidade não subir por rebatida e falsear a checagem.
+        int quadros = (int) (Pong.DURACAO_ESPECIAL / DT) + 30;
+        for (int i = 0; i < quadros; i++) {
+            if (pong.isAguardandoSaque()) {
+                avancarAteSacar();
+            }
+            pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, 1);
             pong.atualizar(DT);
         }
         assertFalse(pong.isEspecial1Ativo());

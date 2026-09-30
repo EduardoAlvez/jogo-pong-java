@@ -83,8 +83,11 @@ public class ComputadorTest {
         // a zona morta (30px) deve impedir oscilação.
         Bola b = new Bola(LARGURA, ALTURA);
         b.centralizar(r.getX() - 100, r.getCentroY(), 1);
+        // Primeiro passa o atraso de reação (0.35s no Fácil), senão o alvo
+        // ainda é o antigo e a raquete se move para lá.
+        c.atualizar(b, 0.35);
         int y = r.getY();
-        c.atualizar(b, 0.3);
+        c.atualizar(b, 0.1);
         assertEquals("raquete deve ficar parada dentro da zona morta", y, r.getY());
     }
 
