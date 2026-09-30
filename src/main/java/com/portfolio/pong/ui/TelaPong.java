@@ -1,28 +1,5 @@
 package com.portfolio.pong.ui;
 
-import com.portfolio.pong.audio.EfeitosSonoros;
-import com.portfolio.pong.core.Bola;
-import com.portfolio.pong.core.Computador;
-import com.portfolio.pong.core.Cronometro;
-import com.portfolio.pong.core.Pong;
-import com.portfolio.pong.core.Premio;
-import com.portfolio.pong.core.Raquete;
-import com.portfolio.pong.fx.Animacoes;
-import com.portfolio.pong.fx.Particula;
-import com.portfolio.pong.skin.CatalogoSkins;
-import com.portfolio.pong.skin.Skin;
-
-import javax.swing.AbstractAction;
-import javax.swing.JColorChooser;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -43,6 +20,28 @@ import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.AbstractAction;
+import javax.swing.JColorChooser;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
+import com.portfolio.pong.audio.EfeitosSonoros;
+import com.portfolio.pong.core.Bola;
+import com.portfolio.pong.core.Computador;
+import com.portfolio.pong.core.Cronometro;
+import com.portfolio.pong.core.Pong;
+import com.portfolio.pong.core.Premio;
+import com.portfolio.pong.core.Raquete;
+import com.portfolio.pong.fx.Animacoes;
+import com.portfolio.pong.fx.Particula;
+import com.portfolio.pong.skin.CatalogoSkins;
+import com.portfolio.pong.skin.Skin;
 
 /**
  * Interface gráfica (Swing) do Pong: desenha o campo, o placar estilo
@@ -126,8 +125,6 @@ public final class TelaPong {
     private int minutos = 2;
     private int alvo = 7;
     private String skinsNome = "Clássico";
-
-    private Botao somBotao;
 
     public TelaPong() {
         // Loop com passo fixo; o Timer do Swing mantém o repaint em ~60 FPS.
@@ -323,7 +320,8 @@ public final class TelaPong {
 
     // -------------------------------------------------------------- Painel
 
-    private final class PongTela extends JPanel {
+    @SuppressWarnings("serial")
+	private final class PongTela extends JPanel {
 
         PongTela() {
             setOpaque(true);
@@ -449,14 +447,6 @@ public final class TelaPong {
 
     private int fy(double v) {
         return oy + (int) (v * escala);
-    }
-
-    private double ex(double v) {
-        return (v - ox) / escala;
-    }
-
-    private double ey(double v) {
-        return (v - oy) / escala;
     }
 
     private void desenharJogo(Graphics2D g2) {

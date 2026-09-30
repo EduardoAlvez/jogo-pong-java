@@ -328,17 +328,27 @@ public class Pong {
     /**
      * Ativa o especial (chamas + velocidade ×2) para um jogador, consumindo a
      * bateria cheia (3 cargas). Duração {@link #DURACAO_ESPECIAL} segundos.
+     * <p>Só é liberado com ao menos uma bola no campo do próprio jogador (do meio
+     * para o seu lado) e apenas um especial fica ativo por vez.
      *
      * @param jogador 1 (esquerda) ou 2 (direita)
-     * @return {@code false} se indisponível (bateria incompleta, em uso ou encerrado)
+     * @return {@code false} se indisponível (bateria incompleta, especial do
+     *         outro em uso, bola no campo do adversário, pausa ou encerrado)
      */
     public boolean usarEspecial(int jogador) {
         if (encerrado || pausaGol > 0.0) {
             return false;
         }
         int carga = jogador == 1 ? cargaEspecial1 : cargaEspecial2;
-        boolean ativo = jogador == 1 ? especial1Ativo : especial2Ativo;
-        if (carga < CARGAS_PARA_ESPECIAL || ativo) {
+        if (carga < CARGAS_PARA_ESPECIAL) {
+            return false;
+        }
+        // Um especial por vez: os dois shareariam a mesma bola e o segundo
+        // capturaria a velocidade já dobrada como se fosse a base.
+        if (especial1Ativo || especial2Ativo) {
+            return false;
+        }
+        if (!especialLiberado(jogador)) {
             return false;
         }
 
@@ -360,6 +370,21 @@ public class Pong {
             especial2Ativo = true;
             tempoEspecial2 = DURACAO_ESPECIAL;
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * O especial só entra com a bola no território do jogador: do meio do campo
+     * para o seu lado. A linha do meio é compartilhada, então a bola exatamente
+     * no centro libera os dois. Com várias bolas basta uma estar do seu lado.
+     */
+    private boolean especialLiberado(int jogador) {
+        double centro = larguraCampo / 2.0;
+        for (Bola b : bolas) {
+            if (jogador == 1 ? b.getX() <= centro : b.getX() >= centro) {
+                return true;
+            }
         }
         return false;
     }
@@ -387,7 +412,8 @@ public class Pong {
 
     /**
      * Mantém as bolas no dobro da velocidade registrada no início do especial.
-     * Se os dois especiais estiverem ativos, vale o ativado por último.
+     * Como só um especial fica ativo por vez, os dois ramos são mutuamente
+     * exclusivos: o do jogador 1 é o que está valendo.
      */
     private void aplicarDobroEspecial() {
         Map<Bola, Double> base = null;
@@ -874,7 +900,7 @@ public class Pong {
         return alturaCampo;
     }
 
-        /** @return {@code true} enquanto a animação de gol roda, antes do novo saque */
+    /** @return {@code true} enquanto a animação de gol roda, antes do novo saque */
     public boolean isAguardandoSaque() {
         return pausaGol > 0.0;
     }
