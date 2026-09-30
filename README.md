@@ -7,6 +7,19 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
   <em>P1 | ⏱ 02:00 | P2 — quem manda no placar?</em>
 </p>
 
+## ⬇️ Baixar
+
+| | Arquivo | Observação |
+|---|---|---|
+| **Windows** | [`jogo-pong-1.0.exe`](https://github.com/EduardoAlvez/jogo-pong-java/releases/tag/v1.0.0) | Arquivo único, com o logo. **Precisa de Java 17+ instalado.** |
+| **Outros** | [`jogo-pong-1.0.jar`](https://github.com/EduardoAlvez/jogo-pong-java/releases/tag/v1.0.0) | `java -jar jogo-pong-1.0.jar` |
+
+O executável não embute a JRE para não pesar centenas de MB: se não encontrar
+nenhum Java instalado, ele mostra uma caixa de erro apontando para o download.
+
+> O ícone do `.jar` é o do Windows, não o do jogo — um `.jar` é um ZIP, e o
+> Windows usa o ícone da associação de arquivos. Por isso existe o `.exe`.
+
 ---
 
 ## ✨ Funcionalidades
@@ -64,7 +77,8 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
   placar, duração, melhor troca e velocidade máxima atingida
 - **Indicador do especial 🔥** (3 traços por jogador: verde/amarelo/vermelho)
   mostrando carga disponível e duração restante
-- **Efeitos sonoros** (bola, batida, gol, especial, fim de partida) com 🔊/🔇
+- **7 efeitos sonoros** (bola, parede, rebatida, gol, especial, prêmio, fim de
+  partida) com interruptor 🔊/🔇
 - Janela redimensionável, controles por teclado (e mouse nos menus)
 
 ---
@@ -103,8 +117,13 @@ Produz dois artefatos em `target/`:
 
 | Arquivo | Tamanho | Para quê |
 |---|---|---|
-| `jogo-pong.exe` | ~350 KB | Executável com o logo embutido, para distribuir |
-| `jogo-pong-1.0-SNAPSHOT.jar` | ~230 KB | Rodar com `java -jar`, útil em outras plataformas |
+| `jogo-pong.exe` | 364 250 bytes | Executável com o logo embutido, para distribuir |
+| `jogo-pong-1.0.jar` | 241 882 bytes | Rodar com `java -jar`, útil em outras plataformas |
+
+> Note o nome: ao compilar, o executável sai como `jogo-pong.exe`, sem a
+> versão; na release ele é publicado como `jogo-pong-1.0.exe`. O `.jar` já sai
+> versionado nos dois casos. É só o launch4j dar o nome ao executável, e o
+> `1.0` na release é o que identifica a versão para quem baixa.
 
 O `.exe` é um único arquivo: o jar fica embutido dentro dele e a JRE **não**,
 então quem abre precisa ter Java 17+ instalado. Sem Java, o executável mostra
@@ -214,9 +233,13 @@ jogo-pong/
 │   │       └── TelaPong.java                # Briefing, jogo, pausa, fim, HUD
 │   ├── main/resources/
 │   │   ├── logo-{16,24,32,48,64,128,256}.png  # Ícone da janela, uma por resolução
-│   │   └── sons/                             # Arquivos .wav sintetizados
+│   │   ├── logo.ico                          # Ícone do executável, gerado pelo GerarLogo
+│   │   └── sons/                             # 7 arquivos .wav sintetizados
 │   └── ...
-└── out/                                     # Saída da compilação manual (ignorada no git)
+├── out/                                     # Saída da compilação manual (ignorada no git)
+└── target/                                  # Saída do Maven (ignorada no git)
+    ├── jogo-pong.exe                        # Executável de arquivo único (launch4j)
+    └── jogo-pong-1.0.jar
 ```
 
 ### Principais classes
@@ -259,7 +282,7 @@ jogo-pong/
 - **Campo fixo escalado**: o jogo roda em 800×500 e é escalado (letterbox)
   para caber na janela — redimensionável sem alterar a física.
 - **Sons sintetizados em código**: os `.wav` (rebater, parede, gol, especial,
-  clique, vitória) são gerados por síntese PCM 16-bit 44,1 kHz mono.
+  clique, vitória, prêmio) são gerados por síntese PCM 16-bit 44,1 kHz mono.
 - **Cobertura não é o mesmo que casos piores cobertos**: a suíte mede quantidade
   de caminhos, não os piores cenários. Já deixou passar uma sobreposição de
   especiais dos dois jogadores — a bola ficava presa no dobro da velocidade para
@@ -278,9 +301,17 @@ jogo-pong/
 - [x] Skins (presets + personalizada persistida)
 - [x] Motor de partículas e animações
 - [x] TelaPong: briefing, jogo, pausa, fim + HUD futebol
-- [x] Efeitos sonoros
-- [ ] Testes unitários (JUnit — branch separada)
-- [ ] Publicar no GitHub
+- [x] Efeitos sonoros (corrigidos para tocar de dentro do `.jar`/`.exe`)
+- [x] Testes unitários — 149 testes na branch `testes-jogo-pong`
+- [x] Publicar no GitHub e lançar a **v1.0.0** (`main` + `testes-jogo-pong`)
+
+### Em aberto (ver [`KANBAN.md`](KANBAN.md))
+
+- [ ] Teste de layout dos badges de efeito e dos cards de prêmio — hoje são
+      cobertos por smoke test headless, que roda o desenho sem olhar o resultado
+- [ ] Conferir na mão o ícone na barra de tarefas/Alt+Tab e o feeling da janela
+      de 5s em que o especial do adversário fica travado por exclusividade
+- [ ] Polir a IA com 2 bolas (adiado)
 
 ---
 
