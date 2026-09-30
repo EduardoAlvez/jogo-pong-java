@@ -25,17 +25,16 @@ tools/
 
 target/                                   # Saída do build (não versionada)
 ├── jogo-pong.exe                         # Executável de arquivo único (launch4j)
-└── jogo-pong-1.0-SNAPSHOT.jar
+└── jogo-pong-1.0.jar
 ```
 
 ## A Fazer (Backlog)
 
 | # | Prioridade | Camada | Tarefa | Detalhes |
 |---|-----------|--------|--------|----------|
-| 1 | Alta | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + **149 testes** cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, skins/persistência/fallback, fogo por velocidade, bateria do especial, **prêmios (levas, validade, sorteio, coleta e os 8 efeitos)**, **pausa pós-gol**, **IA com 2 bolas**, **o portão do especial** (bola no seu campo, meio compartilhado, 2 bolas, um especial por vez e o ratchet de velocidade com os dois querendo usar) e **o áudio servido de dentro de um jar** (regressão do silêncio no executável, troca de mixer e linha que não produz áudio). Cada teste novo de regra vem com o cenário simultâneo e o de reversão |
+| 1 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + **149 testes, todos verdes**, com `Pong` em 95,3% de cobertura. Cobrem física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, skins/persistência/fallback, fogo por velocidade, bateria do especial, **prêmios (levas, validade, sorteio, coleta e os 8 efeitos)**, **pausa pós-gol**, **IA com 2 bolas**, **o portão do especial** (bola no seu campo, meio compartilhado, 2 bolas, um especial por vez e o ratchet de velocidade com os dois querendo usar) e **o áudio servido de dentro de um jar** (regressão do silêncio no executável, troca de mixer e linha que não produz áudio). Cada teste novo de regra vem com o cenário simultâneo e o de reversão. **Pendente**: os efeitos de tela de `TelaPong` (badges e cards de prêmio) são conferidos por smoke test headless, não por teste de layout |
 | 2 | Média | ui | Validação visual | **Feito**: briefing, modos, skins + seletor, gol de ouro, pausa, fim + stats, som, prêmios, pausa pós-gol, Marco 4 e o ícone do `.exe` (conferido no executável, o ícone extraído bate com o `logo-32.png`). **Pendente**: o ícone do logo na barra de tarefas/Alt+Tab (carregado do classpath e conferido por smoke test, mas o resultado visual não foi olhado) e o feeling do portão do especial — se a janela de 5s em que o adversário fica travado por exclusividade incomoda na mão |
-| 3 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
-| 4 | Baixa | core+ui | Polir a IA com 2 bolas | A CPU agora defende a bola mais urgente. Opcional: reduzir velocidade/reação da CPU enquanto houver 2 bolas, para o prêmio bola extra continuar sendo desafio real. **Adiado pelo usuário** |
+| 3 | Baixa | core+ui | Polir a IA com 2 bolas | A CPU agora defende a bola mais urgente. Opcional: reduzir velocidade/reação da CPU enquanto houver 2 bolas, para o prêmio bola extra continuar sendo desafio real. **Adiado pelo usuário** |
 
 ## Fazendo (Doing)
 
@@ -58,6 +57,7 @@ _— vazio —_
 - **audio**: `EfeitosSonoros` — enum `Som`, cache de `Clip`, ganho −9 dB, interruptor global e **escolha explícita de mixer** (padrão, depois os demais, com verificação de que a linha produziu áudio de fato) para sobreviver à troca de dispositivo pelo Windows. A carga sai da EDT e recarrega sozinha quando a lista de mixers muda. **Correção do silêncio no executável**: o áudio é servido de dentro do jar e `AudioSystem.getAudioInputStream()` precisa de `mark/reset` para ler o cabeçalho do WAV, que o stream cru de uma entrada de jar não oferece — daí o `BufferedInputStream`; sem ele o jogo ficava mudo, sem erro visível, no jar e no `.exe`
 - **audio**: 7 `.wav` sintetizados (PCM 16-bit 44.1kHz mono) em `src/main/resources/sons/` — rebater, parede, gol, especial, clique, vitoria, premio — validados por `AudioSystem` pelo classpath e **lendo de dentro de um jar**, que é como o jogo é distribuído
 - **distribuição**: `logo.ico` gerado por `tools/GerarLogo.java` a partir de `logo-256.png`, em 7 resoluções, e `target/jogo-pong.exe` via launch4j — arquivo único com o jar embutido, ícone e VersionInfo, exigindo Java 17+ (sem JRE embarcado). O ícone extraído do executável foi conferido contra o `logo-32.png`
+- **publicação**: repositório `github.com/EduardoAlvez/jogo-pong-java` com as branches `main` e `testes-jogo-pong`, descrição e topics; **release v1.0.0** com `jogo-pong-1.0.exe` (364 KB) e `jogo-pong-1.0.jar` (242 KB). Os anexos foram baixados de volta e conferidos por SHA-256 contra o build local, e o `.exe` baixado foi executado para confirmar que abre. O pom saiu do `-SNAPSHOT` para `1.0` para a versão publicada casar com a do executável
 - **ui**: logo da janela em 7 resoluções (`src/main/resources/logo-*.png`), carregado do classpath e aplicado via `setIconImages` — o Windows escolhe a imagem de cada contexto em vez de escalar uma só; carga tolerante a arquivo ausente, com smoke test das 7 resoluções
 - **ui**: `TelaPong` — briefing customizado, controle via KeyBindings (W/S, ↑/↓, Z/M, Espaço, Esc), campo 800×500 escalado (letterbox/responsivo), HUD futebol (P1\|⏱\|P2, timer vermelho piscando nos últimos 10s, 3 traços de carga do especial), countdown 3-2-1-JÁ!, banner GOL!, gol de ouro, glassmorphism nos cards, skins com seletor ◀▶ + Personalizar (JColorChooser), pausa real com Retomar/Reiniciar/Início, fim com stats (placar/duração/melhor troca/velocidade máx) + Jogar de novo/Início, brilho no especial, marca de queimado, **badges de efeito sobre a raquete** (ícone + segundos) e **cards de prêmio com ícones vetoriais** (sem depender de fonte: ↕ ❄ ⚡ ⏱ ▮ 🔵 viram formas, o "?" do coringa é ASCII) — renderizado sem erros nas 6 fases (smoke test headless) e `mvn package` OK
 
@@ -81,3 +81,6 @@ _— vazio —_
 - **Distribuição**: o jogo é entregue como `.exe` de arquivo único (launch4j), com o
   jar embutido e **sem JRE embarcado** — exige Java 17+ instalado. Um `.jar` não
   permite definir o ícone mostrado pelo Explorer, que é o motivo do executável
+- **Publicação**: `README.md` e `KANBAN.md` descrevem a `1.0.0`; a nota de release
+  fica no corpo da release do GitHub, não versionada no repositório. A release
+  anexa o `.exe` e o `.jar`, e ambos são conferidos por hash após o upload
