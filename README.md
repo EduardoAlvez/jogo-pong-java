@@ -19,10 +19,31 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
   - **Modo Clássico**: sem relógio, primeiro a **5, 7 ou 10 pontos** (escolha sua).
 - **1P vs Computador** (dificuldade Fácil/Médio/Difícil) ou **2P local**
 - **Física clássica**: ângulo de saída varia conforme o ponto de contato na
-  raquete, bola acelera a cada rebatida (+8%, com teto de 800 px/s)
-- **Especial 🔥**: a bola pega fogo automaticamente ao ficar veloz, e cada
-  jogador ainda tem **1 uso da tecla especial** (Z = P1, M = P2) por partida —
-  visual-only, mas **deixa o rastro de queimado na mesa**
+  raquete, bola acelera a cada rebatida (+8% composto, com teto de 900 px/s)
+  e **volta à velocidade base (240 px/s) a cada gol**
+- **Pausa de 1s após o gol** para a animação terminar antes do novo saque
+- **Multiball**: até 2 bolas em campo; a IA defende a bola que chega primeiro
+- **Especial 🔥 recarregável**: bola pega fogo automaticamente ao ficar veloz e
+  cada jogador tem uma **bateria de 3 cargas**, que sobe **+1 a cada rebatida da
+  própria raquete** (não carrega durante o próprio especial, persiste após gol).
+  Ao usar (Z = P1, M = P2) a bola vai a **chamas + velocidade ×2** por 5s
+- **Prêmios no campo (estilo Mario)**: cards coloridos que pulsam e somem em 9s,
+  surgindo em **levas de 1 a 3** (1ª aos 8s, depois a cada 10–16s). A coleta é
+  **pela bola** e vale para quem rebateu por último (ou para o lado que a bola
+  está indo, no saque):
+
+  | Prêmio | Efeito | Duração |
+  |---|---|---|
+  | ↕ Inverter | controles do adversário (só 2P) | 10s |
+  | ❄ Congelar | raquete adversária travada | 4s |
+  | ⚡ Turbo | +40% na própria raquete | 10s |
+  | 🔥 Chamas | fogo, sem gastar o especial | 6s |
+  | ⏱ +10s | só no modo Tempo | — |
+  | ▮ Encolher | raquete adversária vai a 60px | 10s |
+  | 🔵 +1 bola | até o próximo gol (máx. 2) | — |
+  | ? Coringa | re-sorteia um efeito real | — |
+
+  Sem prêmios durante o gol de ouro, e o Inverter não aparece no 1P (contra a CPU)
 - **Sistema de partículas**: rastro de fogo, explosão no gol, tremor de tela e
   fundo animado
 
@@ -39,7 +60,8 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
 - **Briefing antes da partida** com countdown 3-2-1-JÁ!
 - **Pausa real** (overlay Retomar/Reiniciar/Voltar) e **tela de fim com stats**:
   placar, duração, melhor troca e velocidade máxima atingida
-- **Indicador do especial 🔥** mostrando disponibilidade e duração restante
+- **Indicador do especial 🔥** (3 traços por jogador: verde/amarelo/vermelho)
+  mostrando carga disponível e duração restante
 - **Efeitos sonoros** (bola, batida, gol, especial, fim de partida) com 🔊/🔇
 - Janela redimensionável, controles por teclado (e mouse nos menus)
 
@@ -97,7 +119,8 @@ jogo-pong/
 │   │   │   ├── Raquete.java                 # Movimento e limites
 │   │   │   ├── Computador.java              # IA batedível (3 dificuldades)
 │   │   │   ├── Cronometro.java              # Temporizador dos modos Tempo/gol de ouro
-│   │   │   └── Pong.java                    # Estado: modo, placar, especial, stats
+│   │   │   ├── Premio.java                   # Prêmios do campo (tipo, validade, posição)
+│   │   │   └── Pong.java                    # Estado: modo, placar, especial, prêmios, stats
 │   │   ├── skin/                            # Dados visuais e catálogo
 │   │   │   ├── Skin.java                    # Cores, formato, emoji
 │   │   │   └── CatalogoSkins.java           # Presets + persistência da personalizada
@@ -121,7 +144,8 @@ jogo-pong/
 | `core.Raquete` | core | Movimento e limites da raquete |
 | `core.Computador` | core | IA com velocidade limitada, reação e margem de erro |
 | `core.Cronometro` | core | Contagem regressiva, fim de tempo e gol de ouro |
-| `core.Pong` | core | Estado do jogo: modo, placar, sacada, especial e estatísticas |
+| `core.Premio` | core | Prêmios do campo: tipo, cor, validade (9s) e posição |
+| `core.Pong` | core | Estado do jogo: modo, placar, sacada, especial, prêmios, pausa pós-gol e estatísticas |
 | `skin.Skin` / `skin.CatalogoSkins` | skin | Paleta e formato do jogo, presets e skin personalizada persistida |
 | `fx.Animacoes` | fx | Motor de partículas: fogo, queimado na mesa, explosão, confete |
 | `audio.EfeitosSonoros` | audio | Sons .wav com mudo global |
