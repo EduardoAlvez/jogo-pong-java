@@ -5,6 +5,7 @@ import com.portfolio.pong.core.Bola;
 import com.portfolio.pong.core.Computador;
 import com.portfolio.pong.core.Cronometro;
 import com.portfolio.pong.core.Pong;
+import com.portfolio.pong.core.Premio;
 import com.portfolio.pong.core.Raquete;
 import com.portfolio.pong.fx.Animacoes;
 import com.portfolio.pong.fx.Particula;
@@ -36,6 +37,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -175,6 +179,11 @@ public final class TelaPong {
                 if (pong.bateuRaqueteNoFrame()) {
                     som(EfeitosSonoros.Som.REBATER);
                 }
+                if (pong.coletouPremioNoFrame()) {
+                    som(EfeitosSonoros.Som.PREMIO);
+                    animacoes.coletarPremio(pong.getPremioColetadoX(), pong.getPremioColetadoY(),
+                            new Color(pong.getPremioColetadoCor()));
+                }
 
                 int p1 = pong.getPontosEsquerda();
                 int p2 = pong.getPontosDireita();
@@ -188,8 +197,9 @@ public final class TelaPong {
                 }
 
                 if (pong.isBolaEmChamas()) {
-                    Bola bola = pong.getBola();
-                    animacoes.emitirFogo(bola.getX(), bola.getY());
+                    for (Bola bola : pong.getBolas()) {
+                        animacoes.emitirFogo(bola.getX(), bola.getY());
+                    }
                 }
 
                 if (pong.isEncerrado()) {
@@ -213,10 +223,19 @@ public final class TelaPong {
 
     private void moverJogadores() {
         if (cima1 || baixo1) {
-            pong.moverJogador(1, cima1 ? -1 : 1, DT);
+            // Efeito "inverter" troca cima por baixo nas setas do jogador.
+            int dir1 = cima1 ? -1 : 1;
+            if (pong.isControleInvertido(1)) {
+                dir1 = -dir1;
+            }
+            pong.moverJogador(1, dir1, DT);
         }
         if (cima2 || baixo2) {
-            pong.moverJogador(2, cima2 ? -1 : 1, DT);
+            int dir2 = cima2 ? -1 : 1;
+            if (pong.isControleInvertido(2)) {
+                dir2 = -dir2;
+            }
+            pong.moverJogador(2, dir2, DT);
         }
     }
 
@@ -483,9 +502,16 @@ public final class TelaPong {
         g2.drawRect(0, 0, areaGol, FH);
         g2.drawRect(FW - areaGol, 0, areaGol, FH);
 
-        // raquetes (com brilho quando o especial está ativo)
-        desenharRaquete(g2, pong.getRaqueteEsquerda(), s.getCorRaquete1(), pong.isEspecial1Ativo());
-        desenharRaquete(g2, pong.getRaqueteDireita(), s.getCorRaquete2(), pong.isEspecial2Ativo());
+        // prêmio no campo (card "?" que sobe do gramado)
+        desenharPremio(g2);
+
+        // raquetes (com brilho quando o especial ou um efeito está ativo)
+        desenharRaquete(g2, pong.getRaqueteEsquerda(), s.getCorRaquete1(), 1);
+        desenharRaquete(g2, pong.getRaqueteDireita(), s.getCorRaquete2(), 2);
+
+        // badges dos efeitos de prêmio ativos, acima de cada raquete
+        desenharBadges(g2, pong.getRaqueteEsquerda(), 1);
+        desenharBadges(g2, pong.getRaqueteDireita(), 2);
 
         // partículas (abaixo da bola)
         for (Particula p : animacoes.getParticulas()) {
@@ -496,7 +522,7 @@ public final class TelaPong {
                     (int) (p.getRaio() * 2), (int) (p.getRaio() * 2));
         }
 
-        desenharBola(g2);
+        desenharBolas(g2);
 
         // rótulo central (gol de ouro)
         if (pong.isGolDeOuro()) {
@@ -531,18 +557,226 @@ public final class TelaPong {
         g2.setStroke(original);
     }
 
-    private void desenharRaquete(Graphics2D g2, Raquete r, Color cor, boolean especial) {
+    private void desenharRaquete(Graphics2D g2, Raquete r, Color cor, int jogador) {
+        boolean especial = jogador == 1 ? pong.isEspecial1Ativo() : pong.isEspecial2Ativo();
+        boolean congelada = pong.isRaqueteCongelada(jogador);
+        boolean turbo = jogador == 1 ? pong.getTempoTurbo(1) > 0 : pong.getTempoTurbo(2) > 0;
+        int altura = r.getAltura();
+
+        // halo: especial (cor da raquete), turbo (dourado) ou congelada (azul gelo)
+        Color halo = null;
         if (especial) {
-            g2.setColor(new Color(cor.getRed(), cor.getGreen(), cor.getBlue(), 90));
-            g2.fillRoundRect(r.getX() - 6, r.getY() - 6, Raquete.LARGURA + 12,
-                    Raquete.ALTURA + 12, 16, 16);
+            halo = new Color(cor.getRed(), cor.getGreen(), cor.getBlue(), 90);
+        } else if (turbo) {
+            halo = corComAlfa(0xF1C40F, 90);
+        } else if (congelada) {
+            halo = corComAlfa(0x4FC3F7, 90);
         }
+        if (halo != null) {
+            g2.setColor(halo);
+            g2.fillRoundRect(r.getX() - 6, r.getY() - 6, Raquete.LARGURA + 12, altura + 12, 16, 16);
+        }
+
         g2.setColor(cor);
-        g2.fillRoundRect(r.getX(), r.getY(), Raquete.LARGURA, Raquete.ALTURA, 10, 10);
+        g2.fillRoundRect(r.getX(), r.getY(), Raquete.LARGURA, altura, 10, 10);
+
+        // Raquete congelada ganha cristais de gelo por cima.
+        if (congelada) {
+            g2.setColor(corComAlfa(0xB3E5FC, 220));
+            g2.drawRoundRect(r.getX() - 2, r.getY() - 2, Raquete.LARGURA + 4, altura + 4, 12, 12);
+            g2.drawLine(r.getX() + 2, r.getY() + 4, r.getX() + Raquete.LARGURA - 2, r.getY() + altura / 2);
+        }
     }
 
-    private void desenharBola(Graphics2D g2) {
-        Bola bola = pong.getBola();
+    // Constrói uma cor RGB com alfa, no estilo usado no resto da interface.
+    private static Color corComAlfa(int rgb, int alfa) {
+        return new Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, alfa);
+    }
+
+    // badges de efeito (inverter/congelar/turbo/chamas/encolher) sobre a raquete
+    private void desenharBadges(Graphics2D g2, Raquete r, int jogador) {
+        Premio.Tipo[] tipos = {Premio.Tipo.INVERTE, Premio.Tipo.CONGELA, Premio.Tipo.TURBO,
+                Premio.Tipo.CHAMAS, Premio.Tipo.ENCOLHE};
+        double[] tempos = {
+                pong.getTempoInvertido(jogador),
+                pong.getTempoCongelado(jogador),
+                pong.getTempoTurbo(jogador),
+                pong.getTempoChamas(jogador),
+                pong.getTempoEncolhido(jogador),
+        };
+
+        g2.setFont(new Font("Arial", Font.BOLD, 12));
+        int y = r.getY() - 20;
+        for (int i = 0; i < tempos.length; i++) {
+            if (tempos[i] <= 0) {
+                continue;
+            }
+            String numero = String.valueOf((int) Math.ceil(tempos[i]));
+            int w = g2.getFontMetrics().stringWidth(numero) + 26;
+            int x = r.getX() + Raquete.LARGURA / 2 - w / 2;
+            g2.setColor(corComAlfa(0x1B1B2A, 200));
+            g2.fillRoundRect(x, y, w, 18, 9, 9);
+            g2.setColor(corComAlfa(tipos[i].getCorRgb(), 200));
+            g2.setStroke(new BasicStroke(1.6f));
+            g2.drawRoundRect(x, y, w, 18, 9, 9);
+            // ícone desenhado + segundos restantes
+            desenharSimboloPremio(g2, tipos[i], x + 10, y + 9, 6, Color.WHITE);
+            g2.setColor(Color.WHITE);
+            g2.drawString(numero, x + 18, y + 13);
+            y -= 21;
+        }
+    }
+
+    // prêmio no campo: cards "?" que sobem do gramado, pulsam e somem ao expirar
+    private void desenharPremio(Graphics2D g2) {
+        for (Premio premio : pong.getPremios()) {
+            desenharPremio(g2, premio);
+        }
+    }
+
+    private void desenharPremio(Graphics2D g2, Premio premio) {
+        Color cor = new Color(premio.getTipo().getCorRgb());
+        int r = (int) Premio.RAIO;
+        int cx = (int) premio.getX();
+        // sobe do gramado nos primeiros 0.4s
+        double entrada = Math.min(1.0, premio.getTempoDeVida() / 0.4);
+        int cy = (int) (premio.getY() + (1.0 - entrada) * 26);
+        // pulso normal; acelera quando está prestes a sumir
+        double freq = premio.getTempoRestante() < 2.5 ? 14.0 : 5.0;
+        double pulso = 1.0 + 0.12 * Math.sin(premio.getTempoDeVida() * freq);
+
+        // halo
+        int aura = (int) (r * 1.9 * pulso);
+        g2.setColor(corComAlfa(cor.getRGB(), 60));
+        g2.fillOval(cx - aura, cy - aura, aura * 2, aura * 2);
+
+        // card
+        g2.setColor(corComAlfa(0x1B1B2A, 220));
+        g2.fillRoundRect(cx - r, cy - r, r * 2, r * 2, 8, 8);
+        g2.setStroke(new BasicStroke(2.5f));
+        g2.setColor(cor);
+        g2.drawRoundRect(cx - r, cy - r, r * 2, r * 2, 8, 8);
+
+        // ícone: "?" durante a entrada, depois o símbolo do prêmio
+        if (entrada < 0.99) {
+            g2.setFont(new Font("Arial", Font.BOLD, 16));
+            g2.setColor(Color.WHITE);
+            g2.drawString("?", cx - 5, cy + 6);
+        } else {
+            desenharSimboloPremio(g2, premio.getTipo(), cx, cy, r * 0.8, Color.WHITE);
+        }
+    }
+
+    /**
+     * Desenha o símbolo do prêmio com formas geométricas. Evita depender de
+     * fonte: vários caracteres (❄ ⚡ ⏱ ▮ ↕ 🔵) não existem no Arial desta
+     * máquina e apareceriam como "quadradinho" (glifo ausente).
+     */
+    private void desenharSimboloPremio(Graphics2D g2, Premio.Tipo tipo, double cx, double cy,
+                                       double s, Color cor) {
+        g2.setColor(cor);
+        g2.setStroke(new BasicStroke((float) Math.max(1.4, s * 0.24),
+                BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        switch (tipo) {
+            case INVERTE:
+                setaVertical(g2, cx - s * 0.4, cy + s * 0.6, cy - s * 0.2);
+                setaVertical(g2, cx + s * 0.4, cy - s * 0.6, cy + s * 0.2);
+                break;
+            case CONGELA:
+                for (int i = 0; i < 6; i++) {
+                    double a = Math.PI * i / 3.0;
+                    double dx = Math.cos(a) * s * 0.68;
+                    double dy = Math.sin(a) * s * 0.68;
+                    g2.draw(new Line2D.Double(cx - dx, cy - dy, cx + dx, cy + dy));
+                    g2.fill(new Ellipse2D.Double(cx + dx - s * 0.12, cy + dy - s * 0.12,
+                            s * 0.24, s * 0.24));
+                }
+                g2.fill(new Ellipse2D.Double(cx - s * 0.16, cy - s * 0.16, s * 0.32, s * 0.32));
+                break;
+            case TURBO: {
+                Path2D.Double raio = new Path2D.Double();
+                raio.moveTo(cx + s * 0.2, cy - s * 0.72);
+                raio.lineTo(cx - s * 0.36, cy + s * 0.08);
+                raio.lineTo(cx - s * 0.02, cy + s * 0.08);
+                raio.lineTo(cx - s * 0.2, cy + s * 0.72);
+                raio.lineTo(cx + s * 0.38, cy - s * 0.12);
+                raio.lineTo(cx + s * 0.04, cy - s * 0.12);
+                raio.closePath();
+                g2.fill(raio);
+                break;
+            }
+            case CHAMAS: {
+                Path2D.Double chama = new Path2D.Double();
+                chama.moveTo(cx, cy - s * 0.74);
+                chama.curveTo(cx + s * 0.48, cy - s * 0.2, cx + s * 0.5, cy + s * 0.3,
+                        cx + s * 0.2, cy + s * 0.56);
+                chama.curveTo(cx + s * 0.08, cy + s * 0.7, cx - s * 0.08, cy + s * 0.7,
+                        cx - s * 0.2, cy + s * 0.56);
+                chama.curveTo(cx - s * 0.5, cy + s * 0.3, cx - s * 0.3, cy - s * 0.22,
+                        cx, cy - s * 0.74);
+                chama.closePath();
+                g2.fill(chama);
+                break;
+            }
+            case TEMPO:
+                g2.draw(new Ellipse2D.Double(cx - s * 0.64, cy - s * 0.64, s * 1.28, s * 1.28));
+                g2.draw(new Line2D.Double(cx, cy, cx, cy - s * 0.38));
+                g2.draw(new Line2D.Double(cx, cy, cx + s * 0.3, cy + s * 0.12));
+                break;
+            case ENCOLHE:
+                g2.fill(new RoundRectangle2D.Double(cx - s * 0.13, cy - s * 0.58,
+                        s * 0.26, s * 1.16, s * 0.13, s * 0.13));
+                setaHorizontal(g2, cx - s * 0.68, cx - s * 0.28, cy);
+                setaHorizontal(g2, cx + s * 0.68, cx + s * 0.28, cy);
+                break;
+            case DUPLO:
+                g2.fill(new Ellipse2D.Double(cx - s * 0.66, cy - s * 0.36, s * 0.62, s * 0.72));
+                g2.fill(new Ellipse2D.Double(cx + s * 0.04, cy - s * 0.36, s * 0.62, s * 0.72));
+                break;
+            case CORINGA:
+            default:
+                // "?" é ASCII: renderiza em qualquer fonte.
+                g2.setFont(new Font("Arial", Font.BOLD, (int) Math.round(s * 1.5)));
+                String interrogacao = "?";
+                int larg = g2.getFontMetrics().stringWidth(interrogacao);
+                g2.drawString(interrogacao, (int) (cx - larg / 2.0), (int) (cy + s * 0.55));
+                break;
+        }
+    }
+
+    /** Seta vertical com ponta, de (x, y0) até (x, y1). */
+    private void setaVertical(Graphics2D g2, double x, double y0, double y1) {
+        g2.draw(new Line2D.Double(x, y0, x, y1));
+        double dir = Math.signum(y1 - y0);
+        double h = Math.abs(y1 - y0) * 0.42 + 3;
+        Path2D.Double ponta = new Path2D.Double();
+        ponta.moveTo(x, y1);
+        ponta.lineTo(x - h * 0.62, y1 - dir * h);
+        ponta.lineTo(x + h * 0.62, y1 - dir * h);
+        ponta.closePath();
+        g2.fill(ponta);
+    }
+
+    /** Seta horizontal com ponta, de (x0, y) até (x1, y). */
+    private void setaHorizontal(Graphics2D g2, double x0, double x1, double y) {
+        g2.draw(new Line2D.Double(x0, y, x1, y));
+        double dir = Math.signum(x1 - x0);
+        double h = Math.abs(x1 - x0) * 0.42 + 3;
+        Path2D.Double ponta = new Path2D.Double();
+        ponta.moveTo(x1, y);
+        ponta.lineTo(x1 - dir * h, y - h * 0.62);
+        ponta.lineTo(x1 - dir * h, y + h * 0.62);
+        ponta.closePath();
+        g2.fill(ponta);
+    }
+
+    private void desenharBolas(Graphics2D g2) {
+        for (Bola bola : pong.getBolas()) {
+            desenharBola(g2, bola);
+        }
+    }
+
+    private void desenharBola(Graphics2D g2, Bola bola) {
         double r = bola.getRaio();
         int cx = (int) bola.getX();
         int cy = (int) bola.getY();
@@ -631,24 +865,59 @@ public final class TelaPong {
     }
 
     private void posicaoIndicador(Graphics2D g2, int cx, int jogador, boolean visivel) {
-        boolean disponivel = jogador == 1 ? pong.isEspecial1Disponivel() : pong.isEspecial2Disponivel();
-        boolean ativo = jogador == 1 ? pong.isEspecial1Ativo() : pong.isEspecial2Ativo();
         if (!visivel) {
             return;
         }
-        String texto = "Z: 🔥" + (ativo ? " " + String.format("%.1f", pong.getTempoEspecialRestante()) : "");
-        if (jogador == 2) {
-            texto = "M: 🔥" + (ativo ? " " + String.format("%.1f", pong.getTempoEspecialRestante()) : "");
-        }
-        int larg = g2.getFontMetrics().stringWidth(texto) + 14;
-        int x = jogador == 1 ? cx - 320 + 8 : cx + 320 - 8 - larg;
+        int carga = pong.getCargaEspecial(jogador);
+        boolean ativo = jogador == 1 ? pong.isEspecial1Ativo() : pong.isEspecial2Ativo();
+        String tecla = jogador == 1 ? "Z:" : "M:";
+
         int y = 6 + HUD_ALTURA - 24;
-        Color cor = ativo ? new Color(0xFF7F27) : (disponivel ? new Color(255, 255, 255, 200)
-                : new Color(255, 255, 255, 70));
+        int barraW = 7;
+        int barraH = 14;
+        int gap = 3;
+        int textoLarg = g2.getFontMetrics().stringWidth(tecla) + 6;
+        int barraInicio = textoLarg + barraW * Pong.CARGAS_PARA_ESPECIAL + gap * (Pong.CARGAS_PARA_ESPECIAL - 1);
+        int tempoLarg = ativo ? g2.getFontMetrics().stringWidth("🔥×2 0.0") + 14 : 0;
+        int largura = textoLarg + barraInicio + tempoLarg;
+        int x = jogador == 1 ? cx - 320 + 8 : cx + 320 - 8 - largura;
+
         g2.setColor(new Color(255, 255, 255, 25));
-        g2.fillRoundRect(x, y, larg, 22, 11, 11);
+        g2.fillRoundRect(x, y, largura, barraH + 6, 9, 9);
+
+        // Tecla e cor conforme a carga restante.
+        Color cor;
+        if (ativo) {
+            cor = new Color(0xFF7F27);
+        } else if (carga == Pong.CARGAS_PARA_ESPECIAL) {
+            cor = new Color(0x34C759);
+        } else if (carga == 2) {
+            cor = new Color(0xFFD700);
+        } else if (carga == 1) {
+            cor = new Color(0xFF3B30);
+        } else {
+            cor = new Color(255, 255, 255, 70);
+        }
         g2.setColor(cor);
-        g2.drawString(texto, x + 7, y + 15);
+        g2.drawString(tecla, x + 7, y + barraH);
+
+        // Barras da bateria: marca cheia, cor vermelha com 1 carga.
+        int bx = x + 7 + textoLarg;
+        for (int i = 0; i < Pong.CARGAS_PARA_ESPECIAL; i++) {
+            boolean cheia = i < carga;
+            if (cheia) {
+                g2.setColor(cor);
+            } else {
+                g2.setColor(new Color(255, 255, 255, 30));
+            }
+            g2.fillRoundRect(bx + i * (barraW + gap), y + 3, barraW, barraH, 3, 3);
+        }
+
+        if (ativo) {
+            g2.setColor(new Color(0xFF7F27));
+            g2.drawString("🔥×2 " + String.format("%.1f", pong.getTempoEspecialRestante(jogador)),
+                    bx + barraW * Pong.CARGAS_PARA_ESPECIAL + gap * (Pong.CARGAS_PARA_ESPECIAL - 1) + 8, y + barraH);
+        }
     }
 
     private void desenharContagem(Graphics2D g2) {
@@ -707,7 +976,7 @@ public final class TelaPong {
 
         // card "glassmorphism" central
         int cardW = Math.min(w - 40, 560);
-        int cardH = Math.min(h - 130, 390);
+        int cardH = Math.min(h - 130, 430);
         int cardX = (w - cardW) / 2;
         int cardY = 96;
         g2.setColor(new Color(255, 255, 255, 26));
@@ -717,7 +986,7 @@ public final class TelaPong {
         g2.draw(new RoundRectangle2D.Double(cardX, cardY, cardW, cardH, 24, 24));
 
         int pad = 26;
-        int rotuloY = cardY + 26;
+        int rotuloY = cardY + 30;
 
         // modo
         int colsModo = 2;
@@ -735,7 +1004,7 @@ public final class TelaPong {
                         som(EfeitosSonoros.Som.CLIQUE);
                     });
         }
-        rotuloY += 48;
+        rotuloY += 58;
 
         // jogadores / dificuldade
         if (!doisJogadores) {
@@ -753,7 +1022,7 @@ public final class TelaPong {
                             som(EfeitosSonoros.Som.CLIQUE);
                         });
             }
-            rotuloY += 48;
+            rotuloY += 58;
         }
 
         // segundo seletor: tempo ou alvo
@@ -771,7 +1040,7 @@ public final class TelaPong {
                             som(EfeitosSonoros.Som.CLIQUE);
                         });
             }
-            rotuloY += 48;
+            rotuloY += 58;
         } else {
             rotuloY = secaoRotulo(g2, rotuloY, cardX + pad, "Quem chegar primeiro a");
             String[] alvos = {"5", "7", "10"};
@@ -786,7 +1055,7 @@ public final class TelaPong {
                             som(EfeitosSonoros.Som.CLIQUE);
                         });
             }
-            rotuloY += 48;
+            rotuloY += 58;
         }
 
         // 2P local: torna o seletor de dificuldade/direto em botão 2P
@@ -797,7 +1066,7 @@ public final class TelaPong {
                     doisJogadores = !doisJogadores;
                     som(EfeitosSonoros.Som.CLIQUE);
                 });
-        rotuloY += 34;
+        rotuloY += 50;
 
         // skins
         rotuloY = secaoRotulo(g2, rotuloY, cardX + pad, "Skin");
@@ -806,7 +1075,7 @@ public final class TelaPong {
                 delta -> cicloSkin(nomes, delta));
         piscar(g2, "Personalizar...", cardX + pad + 180, rotuloY + 4, 130, 26, false,
                 this::personalizarSkin);
-        rotuloY += 40;
+        rotuloY += 62;
 
         // som + jogar
         somLigado = EfeitosSonoros.isLigado();
@@ -824,7 +1093,7 @@ public final class TelaPong {
         jogar.selecionado = true;
         jogar.ativo = true;
 
-        rotuloY += 48;
+        rotuloY += 58;
         g2.setFont(new Font("Arial", Font.PLAIN, 12));
         g2.setColor(new Color(255, 255, 255, 150));
         String controles = "W/S — Jogador 1 · ↑/↓ — Jogador 2 · Z/M — Bola de fogo · Espaço — Pausa";
@@ -833,10 +1102,10 @@ public final class TelaPong {
     }
 
     private int secaoRotulo(Graphics2D g2, int y, int x, String texto) {
-        g2.setFont(new Font("Arial", Font.BOLD, 13));
-        g2.setColor(new Color(255, 255, 255, 170));
+        g2.setFont(new Font("Arial", Font.BOLD, 14));
+        g2.setColor(new Color(255, 255, 255, 200));
         g2.drawString(texto, x, y);
-        return y + 4;
+        return y + 8;
     }
 
     private int[] espacar(int x, int largura, int n, int folga) {
@@ -897,7 +1166,7 @@ public final class TelaPong {
         g2.setFont(new Font("Arial", Font.BOLD, 13));
         g2.setColor(b.selecionado ? new Color(0x161C28) : Color.WHITE);
         int larg = g2.getFontMetrics().stringWidth(b.texto);
-        g2.drawString(b.texto, b.x + (b.w - larg) / 2, b.y + 18);
+        g2.drawString(b.texto, b.x + (b.w - larg) / 2, b.y + b.h / 2 + 5);
     }
 
     private void cicloSkin(String[] nomes, int delta) {

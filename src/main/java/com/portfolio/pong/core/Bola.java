@@ -21,10 +21,10 @@ public class Bola {
     public static final double VELOCIDADE_BASE = 240.0;
 
     /** Teto de velocidade, em pixels por segundo. */
-    public static final double VELOCIDADE_MAXIMA = 800.0;
+    public static final double VELOCIDADE_MAXIMA = 900.0;
 
-    /** Fator de aceleração a cada rebatida na raquete (+6%). */
-    public static final double ACELERACAO_POR_REBATIDA = 1.06;
+    /** Fator de aceleração a cada rebatida na raquete (+8%). */
+    public static final double ACELERACAO_POR_REBATIDA = 1.08;
 
     /** Ângulo máximo de reflexão em relação à horizontal (±60°). */
     public static final double ANGULO_MAXIMO = Math.PI / 3.0;
@@ -46,6 +46,22 @@ public class Bola {
         this.larguraCampo = larguraCampo;
         this.alturaCampo = alturaCampo;
         this.raio = RAIO;
+    }
+
+    /**
+     * Cria uma cópia da bola no mesmo estado (posição e velocidade). Usado
+     * para o prêmio de "bola extra", por exemplo.
+     *
+     * @param origem bola a ser copiada
+     */
+    public Bola(Bola origem) {
+        this.larguraCampo = origem.larguraCampo;
+        this.alturaCampo = origem.alturaCampo;
+        this.raio = origem.raio;
+        this.x = origem.x;
+        this.y = origem.y;
+        this.vx = origem.vx;
+        this.vy = origem.vy;
     }
 
     /**
@@ -72,6 +88,11 @@ public class Bola {
     public void mover(double dt) {
         x += vx * dt;
         y += vy * dt;
+    }
+
+    /** Espelha o ângulo de deslocamento no eixo vertical (inverte o sinal de vy). */
+    public void espelharVertical() {
+        vy = -vy;
     }
 
     /**
@@ -108,7 +129,7 @@ public class Bola {
             return false;
         }
 
-        double contacto = (y - raquete.getY()) / Raquete.ALTURA;
+        double contacto = (y - raquete.getY()) / raquete.getAltura();
         contacto = Math.max(0.0, Math.min(1.0, contacto));
         double angulo = (contacto - 0.5) * 2.0 * ANGULO_MAXIMO;
 
@@ -188,7 +209,7 @@ public class Bola {
         double cx = Math.max(raquete.getX(),
                 Math.min(x, raquete.getX() + Raquete.LARGURA));
         double cy = Math.max(raquete.getY(),
-                Math.min(y, raquete.getY() + Raquete.ALTURA));
+                Math.min(y, raquete.getY() + raquete.getAltura()));
         double dx = x - cx;
         double dy = y - cy;
         return (dx * dx + dy * dy) <= raio * raio;
