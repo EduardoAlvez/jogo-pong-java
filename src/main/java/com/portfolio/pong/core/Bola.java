@@ -21,7 +21,7 @@ public class Bola {
     public static final double VELOCIDADE_BASE = 240.0;
 
     /** Teto de velocidade, em pixels por segundo. */
-    public static final double VELOCIDADE_MAXIMA = 800.0;
+    public static final double VELOCIDADE_MAXIMA = 900.0;
 
     /** Fator de aceleração a cada rebatida na raquete (+8%). */
     public static final double ACELERACAO_POR_REBATIDA = 1.08;
@@ -129,7 +129,7 @@ public class Bola {
             return false;
         }
 
-        double contacto = (y - raquete.getY()) / Raquete.ALTURA;
+        double contacto = (y - raquete.getY()) / raquete.getAltura();
         contacto = Math.max(0.0, Math.min(1.0, contacto));
         double angulo = (contacto - 0.5) * 2.0 * ANGULO_MAXIMO;
 
@@ -209,7 +209,7 @@ public class Bola {
         double cx = Math.max(raquete.getX(),
                 Math.min(x, raquete.getX() + Raquete.LARGURA));
         double cy = Math.max(raquete.getY(),
-                Math.min(y, raquete.getY() + Raquete.ALTURA));
+                Math.min(y, raquete.getY() + raquete.getAltura()));
         double dx = x - cx;
         double dy = y - cy;
         return (dx * dx + dy * dy) <= raio * raio;

@@ -41,6 +41,19 @@ public class Cronometro {
         }
     }
 
+    /**
+     * Acrescenta segundos ao tempo restante (prêmio "tempo"), respeitando a
+     * duração máxima da partida. Não faz nada se o tempo já acabou.
+     *
+     * @param segundos quantos segundos somar
+     */
+    public void adicionarSegundos(int segundos) {
+        if (restante <= 0 || segundos <= 0) {
+            return;
+        }
+        restante = Math.min(duracaoSegundos, restante + segundos);
+    }
+
     /** @return {@code true} quando o tempo acabou */
     public boolean acabou() {
         return restante <= 0;

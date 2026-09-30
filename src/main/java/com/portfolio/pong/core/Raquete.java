@@ -14,8 +14,12 @@ public class Raquete {
     /** Altura da raquete, em pixels. */
     public static final int ALTURA = 90;
 
+    /** Altura mínima da raquete (prêmio "encolher"), em pixels. */
+    public static final int ALTURA_MINIMA = 60;
+
     private final int x;
     private int y;
+    private int altura = ALTURA;
     private final int alturaCampo;
 
     /**
@@ -38,19 +42,19 @@ public class Raquete {
 
     /** Move a raquete para baixo, respeitando o limite inferior do campo. */
     public int moverBaixo(int passos) {
-        y = Math.min(alturaCampo - ALTURA, y + passos);
+        y = Math.min(alturaCampo - altura, y + passos);
         return y;
     }
 
     /** Define a posição vertical, limitada aos limites do campo. */
     public int setY(int novoY) {
-        y = Math.max(0, Math.min(alturaCampo - ALTURA, novoY));
+        y = Math.max(0, Math.min(alturaCampo - altura, novoY));
         return y;
     }
 
     /** Centraliza a raquete verticalmente (usado nos resets). */
     public void centralizar() {
-        y = (alturaCampo - ALTURA) / 2;
+        y = (alturaCampo - altura) / 2;
     }
 
     /** @return posição da borda esquerda da raquete */
@@ -63,9 +67,28 @@ public class Raquete {
         return y;
     }
 
+    /** @return altura atual da raquete (pode estar encolhida) */
+    public int getAltura() {
+        return altura;
+    }
+
+    /**
+     * Define a altura da raquete, preservando o centro vertical (usado pelo
+     * prêmio "encolher"). O valor é limitado entre {@link #ALTURA_MINIMA} e
+     * {@link #ALTURA}.
+     *
+     * @param novaAltura nova altura em pixels
+     */
+    public void setAltura(int novaAltura) {
+        double centro = getCentroY();
+        altura = Math.max(ALTURA_MINIMA, Math.min(ALTURA, novaAltura));
+        y = (int) Math.round(centro - altura / 2.0);
+        setY(y);
+    }
+
     /** @return centro vertical da raquete */
     public double getCentroY() {
-        return y + ALTURA / 2.0;
+        return y + altura / 2.0;
     }
 
     /** @return altura do campo onde a raquete se move */
