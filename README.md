@@ -26,7 +26,9 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
 - **Especial 🔥 recarregável**: bola pega fogo automaticamente ao ficar veloz e
   cada jogador tem uma **bateria de 3 cargas**, que sobe **+1 a cada rebatida da
   própria raquete** (não carrega durante o próprio especial, persiste após gol).
-  Ao usar (Z = P1, M = P2) a bola vai a **chamas + velocidade ×2** por 5s
+  Ao usar (Z = P1, M = P2) a bola vai a **chamas + velocidade ×2** por 5s.
+  Só entra com **pelo menos uma bola no seu campo** (do meio para o seu lado) e
+  **um especial por vez** — o outro jogador espera o de quem está usando acabar
 - **Prêmios no campo (estilo Mario)**: cards coloridos que pulsam e somem em 9s,
   surgindo em **levas de 1 a 3** (1ª aos 8s, depois a cada 10–16s). A coleta é
   **pela bola** e vale para quem rebateu por último (ou para o lado que a bola
@@ -177,6 +179,13 @@ jogo-pong/
   para caber na janela — redimensionável sem alterar a física.
 - **Sons sintetizados em código**: os `.wav` (rebater, parede, gol, especial,
   clique, vitória) são gerados por síntese PCM 16-bit 44,1 kHz mono.
+- **Cobertura não é o mesmo que casos piores cobertos**: a suíte mede quantidade
+  de caminhos, não os piores cenários. Já deixou passar uma sobreposição de
+  especiais dos dois jogadores — a bola ficava presa no dobro da velocidade para
+  o resto da partida — porque todos os testes de `usarEspecial` usavam
+  `jogador == 1`. A regra adotada: para cada regra nova, escrever o cenário
+  simultâneo (os dois jogadores, duas bolas) e o de reversão (o estado volta ao
+  normal quando o efeito acaba), além do caminho feliz isolado.
 
 ---
 
