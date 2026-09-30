@@ -93,6 +93,57 @@ mvn clean compile exec:java
 Abra como projeto Maven no IntelliJ IDEA ou Eclipse e execute
 `com.portfolio.pong.ui.TelaPong`.
 
+### Opção 4 — Gerar o executável para Windows
+
+```bash
+mvn clean package
+```
+
+Produz dois artefatos em `target/`:
+
+| Arquivo | Tamanho | Para quê |
+|---|---|---|
+| `jogo-pong.exe` | ~350 KB | Executável com o logo embutido, para distribuir |
+| `jogo-pong-1.0-SNAPSHOT.jar` | ~230 KB | Rodar com `java -jar`, útil em outras plataformas |
+
+O `.exe` é um único arquivo: o jar fica embutido dentro dele e a JRE **não**,
+então quem abre precisa ter Java 17+ instalado. Sem Java, o executável mostra
+uma caixa de erro apontando para a página de download.
+
+Para pular a geração do executável (build mais rápido, ou em CI):
+
+```bash
+mvn clean package -DskipLaunch4j
+```
+
+#### Por que existe um `.exe` se o projeto já tem `.jar`
+
+Um `.jar` **não consegue** ter ícone próprio. Ele é um arquivo ZIP (começa com
+`PK`) e o Windows tira o ícone que aparece no Explorer da *associação de
+arquivos* do sistema, não do conteúdo do arquivo. Nenhum atributo de manifesto
+muda isso — é limitação do Windows, não configuração faltando.
+
+Por isso existem dois ícones, com caminhos diferentes:
+
+- **ícone da janela** — `logo-*.png` + `setIconImages` em `TelaPong`; o Windows
+  escolhe a resolução certa para cada contexto (barra de tarefas, Alt+Tab, title)
+- **ícone do arquivo** — `logo.ico` dentro do `.exe`, gerado pelo
+  `launch4j-maven-plugin` durante o `package`
+
+#### Regenerar os ícones
+
+O logo mestre é `src/main/resources/logo-256.png`. As resolutions menores e o
+`.ico` saem dele pela ferramenta:
+
+```bash
+java tools/GerarLogo.java
+```
+
+Sem dependência externa: o JDK não tem writer de ICO no `ImageIO`, então
+`GerarLogo` monta o arquivo `.ico` na mão (entradas BMP com máscara AND até
+48px, PNG comprimido acima disso). O `.ico` é formato little-endian; a
+ferramenta escreve os inteiros byte a byte por causa disso.
+
 ---
 
 ## 🎮 Como jogar
@@ -114,6 +165,8 @@ Abra como projeto Maven no IntelliJ IDEA ou Eclipse e execute
 jogo-pong/
 ├── pom.xml                                  # Build Maven (Java 17, mainClass: TelaPong)
 ├── KANBAN.md                                # Quadro de tarefas do projeto
+├── tools/
+│   └── GerarLogo.java                       # Regera os PNGs e o logo.ico a partir do mestre
 ├── src/
 │   ├── main/java/com/portfolio/pong/
 │   │   ├── core/                            # Núcleo puro e testável (sem Swing)

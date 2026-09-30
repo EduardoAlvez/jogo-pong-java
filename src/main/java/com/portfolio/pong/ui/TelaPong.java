@@ -339,10 +339,22 @@ public final class TelaPong {
         }
 
         void configurarTeclado() {
-            bind("p1-cima", KeyEvent.VK_W, () -> cima1 = true, () -> cima1 = false);
-            bind("p1-baixo", KeyEvent.VK_S, () -> baixo1 = true, () -> baixo1 = false);
-            bind("p2-cima", KeyEvent.VK_UP, () -> cima2 = true, () -> cima2 = false);
-            bind("p2-baixo", KeyEvent.VK_DOWN, () -> baixo2 = true, () -> baixo2 = false);
+            bind("p1-cima", KeyEvent.VK_W, () -> {
+                EfeitosSonoros.verificarMudancaDeDispositivo();
+                cima1 = true;
+            }, () -> cima1 = false);
+            bind("p1-baixo", KeyEvent.VK_S, () -> {
+                EfeitosSonoros.verificarMudancaDeDispositivo();
+                baixo1 = true;
+            }, () -> baixo1 = false);
+            bind("p2-cima", KeyEvent.VK_UP, () -> {
+                EfeitosSonoros.verificarMudancaDeDispositivo();
+                cima2 = true;
+            }, () -> cima2 = false);
+            bind("p2-baixo", KeyEvent.VK_DOWN, () -> {
+                EfeitosSonoros.verificarMudancaDeDispositivo();
+                baixo2 = true;
+            }, () -> baixo2 = false);
             bind("especial1", KeyEvent.VK_Z, () -> usarEspecial(1), () -> { });
             bind("especial2", KeyEvent.VK_M, () -> usarEspecial(2), () -> { });
             bind("pausa", KeyEvent.VK_SPACE, () -> alternarPausa(), () -> { });
@@ -1084,6 +1096,12 @@ public final class TelaPong {
                 () -> {
                     somLigado = !somLigado;
                     EfeitosSonoros.setLigado(somLigado);
+                    if (somLigado) {
+                        // Religa resolvendo o dispositivo de novo: o som pode
+                        // ter sido silenciado enquanto o jogador trocava a saída.
+                        EfeitosSonoros.recarregar();
+                        EfeitosSonoros.tocar(EfeitosSonoros.Som.CLIQUE);
+                    }
                 });
         Botao jogar = piscar(g2, "JOGAR ▶", cardX + cardW - pad - 150, rotuloY + 4, 150, 34, false,
                 () -> {

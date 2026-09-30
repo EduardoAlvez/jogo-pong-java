@@ -17,6 +17,10 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.class>com.portfolio.pong.ui.TelaPong</main.class>
+        <logo.ico>${project.basedir}/src/main/resources/logo.ico</logo.ico>
+        <exe.file.version>1.0.0.0</exe.file.version>
+        <exe.product.version>1.0.0.0</exe.product.version>
+        <exe.version.text>1.0</exe.version.text>
     </properties>
 
     <dependencies>
@@ -73,6 +77,48 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.7.0</version>
+                <executions>
+                    <execution>
+                        <id>l4j-gui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>${project.build.directory}/jogo-pong.exe</outfile>
+                            <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+                            <icon>${logo.ico}</icon>
+                            <errTitle>Jogo Pong</errTitle>
+                            <downloadUrl>https://www.adoptium.net/</downloadUrl>
+                            <disableVersionInfoDefaults>true</disableVersionInfoDefaults>
+                            <classPath>
+                                <mainClass>${main.class}</mainClass>
+                                <addDependencies>false</addDependencies>
+                            </classPath>
+                            <jre>
+                                <path>%JAVA_HOME%;%PATH%</path>
+                                <minVersion>17.0.0</minVersion>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>${exe.file.version}</fileVersion>
+                                <txtFileVersion>${exe.version.text}</txtFileVersion>
+                                <fileDescription>Jogo Pong</fileDescription>
+                                <copyright>Copyright (c) 2026 Eduardo Alves</copyright>
+                                <productVersion>${exe.product.version}</productVersion>
+                                <txtProductVersion>${exe.version.text}</txtProductVersion>
+                                <productName>Jogo Pong</productName>
+                                <internalName>jogo-pong</internalName>
+                                <originalFilename>jogo-pong.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
