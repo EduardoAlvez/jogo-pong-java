@@ -3,6 +3,9 @@ package com.portfolio.pong.core;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -59,6 +62,42 @@ public class PongTest {
         jogarRebatendo(jogador, 6000);
         assertEquals("a bateria deveria ter encherdo",
                 Pong.CARGAS_PARA_ESPECIAL, pong.getCargaEspecial(jogador));
+    }
+
+    /**
+     * Estaciona a bola no campo do jogador, para o especial ficar liberado.
+     * Sem isto o especial dependeria de a bola ter parado no lado certo por
+     * acaso ao fim dos 6000 quadros de {@link #carregarBateria}.
+     */
+    private void bolaNoLadoDo(int jogador) {
+        double x = jogador == 1 ? LARGURA / 4.0 : LARGURA * 3.0 / 4.0;
+        pong.getBola().centralizar(x, ALTURA / 2.0, jogador == 1 ? -1 : 1);
+    }
+
+    /** Cria a segunda bola (recurso do prêmio DUPLO), por reflexão. */
+    private void adicionarBolaExtra() throws Exception {
+        Method m = Pong.class.getDeclaredMethod("adicionarBolaExtra");
+        m.setAccessible(true);
+        m.invoke(pong);
+    }
+
+    /**
+     * Move a bola preservando a velocidade. {@link #bolaNoLadoDo} usa
+     * {@code centralizar}, que zera a velocidade na base — isso apagaria
+     * justamente a velocidade dobrada que o segundo especial precisa capturar
+     * para reproduzir o defeito.
+     */
+    private void moverBolaSemMudarVelocidade(Bola b, double x) throws Exception {
+        Field f = Bola.class.getDeclaredField("x");
+        f.setAccessible(true);
+        f.setDouble(b, x);
+    }
+
+    /** Encerra o especial do jogador sem esperar os 5s de relógio. */
+    private void encerrarEspecialDe(int jogador) throws Exception {
+        Method m = Pong.class.getDeclaredMethod("encerrarEspecial", int.class);
+        m.setAccessible(true);
+        m.invoke(pong, jogador);
     }
 
     /** Bola disparada em linha reta para a direita, com a raquete direita
@@ -221,6 +260,7 @@ public class PongTest {
 
         carregarBateria(1);
         int carga2Antes = pong.getCargaEspecial(2);
+        bolaNoLadoDo(1);
         assertTrue(pong.usarEspecial(1));
         assertEquals("uso zera a bateria", 0, pong.getCargaEspecial(1));
         assertEquals("cada jogador tem a própria bateria",
@@ -231,6 +271,7 @@ public class PongTest {
     @Test
     public void especialNaoRecarregaComRabatidaDaPropriaEnquantoAtivo() {
         carregarBateria(1);
+        bolaNoLadoDo(1);
         assertTrue(pong.usarEspecial(1));
         assertEquals(0, pong.getCargaEspecial(1));
 
@@ -244,6 +285,7 @@ public class PongTest {
     public void especialAtivaBolaEmChamasEDecai() {
         assertFalse(pong.isBolaEmChamas());
         carregarBateria(1);
+        bolaNoLadoDo(1);
         assertTrue(pong.usarEspecial(1));
         assertTrue(pong.isEspecial1Ativo());
         assertTrue(pong.isBolaEmChamas());
@@ -279,11 +321,148 @@ public class PongTest {
 
     @Test
     public void especialExpiraMesmoSemComerOTempo() {
-        pong.usarEspecial(1);
+        // Sem bateria e sem bola no lado certo o uso nem sairia; este teste só
+        // faz sentido com o especial realmente ativado.
+        carregarBateria(1);
+        bolaNoLadoDo(1);
+        assertTrue("premissa: o especial ativou", pong.usarEspecial(1));
+
         for (int i = 0; i < (int) (Pong.DURACAO_ESPECIAL / DT) + 10; i++) {
             pong.atualizar(DT);
         }
         assertFalse(pong.isEspecial1Ativo());
+    }
+
+    // -------------------------------------------- Especial: bola no seu campo
+
+    @Test
+    public void especialNaoAtivaComBolaNoCampoDoAdversario() {
+        carregarBateria(1);
+        bolaNoLadoDo(2);
+        assertFalse("bola no campo do adversário não ativa",
+                pong.usarEspecial(1));
+        assertEquals("bloqueado não gasta carga",
+                Pong.CARGAS_PARA_ESPECIAL, pong.getCargaEspecial(1));
+        assertFalse(pong.isEspecial1Ativo());
+    }
+
+    @Test
+    public void especialAtivaComBolaNoProprioCampo() {
+        carregarBateria(1);
+        bolaNoLadoDo(1);
+        assertTrue(pong.usarEspecial(1));
+        assertTrue(pong.isEspecial1Ativo());
+    }
+
+    @Test
+    public void especialAtivaComBolaNoMeioDoCampo() {
+        carregarBateria(1);
+        pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, -1);
+        assertTrue("o meio do campo é territory neutro e libera",
+                pong.usarEspecial(1));
+    }
+
+    @Test
+    public void especialDoJogadorDoisUsaComBolaNoCampoDireito() {
+        carregarBateria(2);
+        bolaNoLadoDo(2);
+        assertTrue(pong.usarEspecial(2));
+        assertTrue(pong.isEspecial2Ativo());
+    }
+
+    @Test
+    public void especialDoJogadorDoisNaoUsaComBolaNoCampoEsquerdo() {
+        carregarBateria(2);
+        bolaNoLadoDo(1);
+        assertFalse("campo do jogador 1 não libera o especial do 2",
+                pong.usarEspecial(2));
+        assertEquals(Pong.CARGAS_PARA_ESPECIAL, pong.getCargaEspecial(2));
+    }
+
+    @Test
+    public void especialLiberaComQualquerBolaNoMeuLado() throws Exception {
+        carregarBateria(1);
+        adicionarBolaExtra();
+        // Uma bola de cada lado: a que está comigo já basta.
+        pong.getBolas().get(0).centralizar(LARGURA * 3.0 / 4.0, 100, -1);
+        pong.getBolas().get(1).centralizar(LARGURA / 4.0, 400, 1);
+        assertTrue(pong.usarEspecial(1));
+    }
+
+    @Test
+    public void especialTravaSeTodasAsBolasEstaoNoCampoDoAdversario() throws Exception {
+        carregarBateria(1);
+        adicionarBolaExtra();
+        pong.getBolas().get(0).centralizar(LARGURA * 3.0 / 4.0, 100, -1);
+        pong.getBolas().get(1).centralizar(LARGURA * 0.6, 400, -1);
+        assertFalse("nenhuma bola do meu lado", pong.usarEspecial(1));
+        assertEquals(Pong.CARGAS_PARA_ESPECIAL, pong.getCargaEspecial(1));
+    }
+
+    // ------------------------------------------------ Especial: um por vez
+
+    @Test
+    public void especialDoJogadorDoisTravaComOEspecialDoJogadorUmAtivo() {
+        carregarBateria(1);
+        carregarBateria(2);
+        bolaNoLadoDo(1);
+        assertTrue(pong.usarEspecial(1));
+
+        // Bola no lado do jogador 2, então só a exclusividade pode barrar.
+        bolaNoLadoDo(2);
+        assertFalse("um especial por vez", pong.usarEspecial(2));
+        assertEquals("a bateria do 2 não é gasta enquanto o 1 usa",
+                Pong.CARGAS_PARA_ESPECIAL, pong.getCargaEspecial(2));
+        assertFalse(pong.isEspecial2Ativo());
+    }
+
+    @Test
+    public void especialLiberaAposOEspecialDoOutroExpirar() throws Exception {
+        carregarBateria(1);
+        carregarBateria(2);
+        bolaNoLadoDo(1);
+        assertTrue(pong.usarEspecial(1));
+        bolaNoLadoDo(2);
+        assertFalse(pong.usarEspecial(2));
+
+        encerrarEspecialDe(1);
+        assertTrue("liberado assim que o do jogador 1 cai",
+                pong.usarEspecial(2));
+        assertTrue(pong.isEspecial2Ativo());
+    }
+
+    /**
+     * Regressão dos dois bugs da sobreposição: o segundo especial era aceito e
+     * capturava a velocidade já dobrada como base, então a bola subia para o
+     * teto de 900 na virada e ficava presa no dobro da velocidade.
+     */
+    @Test
+    public void bolaNaoRachaNemSobeParaOTetoComOsDoisQuerendoUsar() throws Exception {
+        double base = Bola.VELOCIDADE_BASE;
+        carregarBateria(1);
+        carregarBateria(2);
+        bolaNoLadoDo(1);
+        assertTrue(pong.usarEspecial(1));
+        pong.atualizar(DT);
+        assertEquals("o especial dobra a velocidade", base * 2.0,
+                pong.getBola().getVelocidade(), 0.01);
+
+        // Move para o lado do jogador 2 sem zerar a velocidade: é a 480 que o
+        // segundo especial ia capturar como se fosse a base.
+        moverBolaSemMudarVelocidade(pong.getBola(), LARGURA * 3.0 / 4.0);
+        assertFalse("o segundo especial não entra", pong.usarEspecial(2));
+
+        // O do jogador 1 cai: sem especial ativo, a bola volta à base — e não ao
+        // teto de 900, que era o que a base capturada pelo jogador 2 causava.
+        encerrarEspecialDe(1);
+        pong.atualizar(DT);
+        assertEquals("a bola volta à base, não vai a 900", base,
+                pong.getBola().getVelocidade(), 0.01);
+
+        assertTrue(pong.usarEspecial(2));
+        pong.atualizar(DT);
+        assertEquals("o do jogador 2 dobra a partir da base, não do dobro",
+                base * 2.0, pong.getBola().getVelocidade(), 0.01);
     }
 
     // ----------------------------------------------------------- Física

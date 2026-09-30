@@ -20,7 +20,7 @@ src/main/java/com/portfolio/pong/
 
 | # | Prioridade | Camada | Tarefa | Detalhes |
 |---|-----------|--------|--------|----------|
-| 1 | Alta | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + **134 testes** cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, skins/persistência/fallback, fogo por velocidade, bateria do especial, **prêmios (levas, validade, sorteio, coleta e os 8 efeitos)**, **pausa pós-gol** e **IA com 2 bolas**. Núcleo com 92–100% por classe |
+| 1 | Alta | (branch) | Testes unitários | Branch `testes-jogo-pong`: pom (JUnit 4.13.2 + surefire + JaCoCo) + **144 testes** cobrindo física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, skins/persistência/fallback, fogo por velocidade, bateria do especial, **prêmios (levas, validade, sorteio, coleta e os 8 efeitos)**, **pausa pós-gol**, **IA com 2 bolas** e **o portão do especial** (bola no seu campo, meio compartilhado, 2 bolas, um especial por vez e o ratchet de velocidade com os dois querendo usar). Cada teste novo de regra vem com o cenário simultâneo e o de reversão |
 | 2 | Alta | ui | Validação visual | Jogar/testar manualmente: briefing, modos, especial, skins, gol de ouro, pausa, fim + stats, som, prêmios e pausa pós-gol |
 | 3 | Média | — | Publicar no GitHub | Repositório remoto + push das branches main e testes |
 | 4 | Baixa | core+ui | Polir a IA com 2 bolas | A CPU agora defende a bola mais urgente. Opcional: reduzir velocidade/reação da CPU enquanto houver 2 bolas, para o prêmio bola extra continuar sendo desafio real |
