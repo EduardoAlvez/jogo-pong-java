@@ -807,10 +807,6 @@ public class Pong {
         return modo;
     }
 
-    public Computador.Dificuldade getDificuldade() {
-        return dificuldadeCPU;
-    }
-
     public Cronometro getCronometro() {
         return cronometro;
     }
