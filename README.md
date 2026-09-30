@@ -116,6 +116,32 @@ Para pular a geração do executável (build mais rápido, ou em CI):
 mvn clean package -DskipLaunch4j
 ```
 
+#### Os efeitos sonoros no executável
+
+Rodando o jogo direto do Maven ou de um `.jar` solto, os 7 efeitos tocam sem
+problema. Distribuído — dentro do `.jar` que o `.exe` embute — o jogo ficava
+**completo e mudo**, sem mensagem de erro.
+
+O motivo: `AudioSystem.getAudioInputStream()` precisa de `mark/reset` para ler o
+cabeçalho do `.wav` e descobrir o formato. Um `file:` URL (recurso solto em disco)
+já entrega um `BufferedInputStream` e nunca mostra o problema; a entrada de um
+`jar` entrega o stream cru, que não aceita `mark`, e a leitura falha com
+`mark/reset not supported` antes de qualquer linha de áudio ser aberta.
+
+O caminho de leitura embrulha o stream em `BufferedInputStream`, e a suíte cobre
+o caso: o teste grava uma das WAVs em um jar de verdade e a passa pelo mesmo
+caminho de leitura do jogo. Sem o buffer, ele falha.
+
+> Um detalhe que engana: rodar `mvn test` **não** reproduz o defeito, porque no
+> classpath de teste os recursos são arquivos soltos. Só a leitura de dentro de um
+> jar expõe o problema.
+
+Além disso, a escolha do dispositivo de saída é explícita: o mixer padrão do
+Java fica preso ao dispositivo escolhido na primeira vez, e uma linha aberta em
+um dispositivo que o Windows removeu aceita `start()` e fica inativa sem erro.
+Por isso o áudio é testado de verdade antes de ser aceito, e recarrega sozinho
+quando a lista de dispositivos do sistema muda.
+
 #### Por que existe um `.exe` se o projeto já tem `.jar`
 
 Um `.jar` **não consegue** ter ícone próprio. Ele é um arquivo ZIP (começa com
@@ -132,7 +158,7 @@ Por isso existem dois ícones, com caminhos diferentes:
 
 #### Regenerar os ícones
 
-O logo mestre é `src/main/resources/logo-256.png`. As resolutions menores e o
+O logo mestre é `src/main/resources/logo-256.png`. As resoluções menores e o
 `.ico` saem dele pela ferramenta:
 
 ```bash
