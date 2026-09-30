@@ -307,11 +307,16 @@ jogo-pong/
 
 ### Em aberto (ver [`KANBAN.md`](KANBAN.md))
 
-- [ ] Teste de layout dos badges de efeito e dos cards de prêmio — hoje são
-      cobertos por smoke test headless, que roda o desenho sem olhar o resultado
-- [ ] Conferir na mão o ícone na barra de tarefas/Alt+Tab e o feeling da janela
-      de 5s em que o especial do adversário fica travado por exclusividade
+- [ ] **Badges de efeito somem com a raquete no topo** — defeito confirmado: o
+      primeiro badge é desenhado 20px acima da raquete e cada um sobe mais 21px;
+      com a raquete em `y = 0` e os 5 efeitos ativos o topo chega a y = −104 e
+      nenhum aparece. Sem `clip`, e sem exceção, então nada acusa
+- [ ] Testes de UI — a camada não tem nenhum; a suíte de 149 cobre só `core`,
+      `skin`, `fx` e `audio`
 - [ ] Polir a IA com 2 bolas (adiado)
+
+O ícone na barra de tarefas/Alt+Tab e o feeling da janela de 5s do especial já
+foram conferidos e aprovados.
 
 ---
 
