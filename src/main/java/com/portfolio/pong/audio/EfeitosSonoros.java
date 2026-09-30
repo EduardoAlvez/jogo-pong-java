@@ -176,6 +176,14 @@ public final class EfeitosSonoros {
     }
 
     /**
+     * @return {@code true} enquanto algum efeito está sendo carregado, o que
+     *         acontece fora da EDT e leva alguns milissegundos na primeira vez
+     */
+    public static boolean isCarregando() {
+        return !CARREGANDO.isEmpty();
+    }
+
+    /**
      * @return nome do mixer em uso, ou {@code null} se nenhum foi resolvido
      */
     public static String getMixerEmUso() {
@@ -326,9 +334,23 @@ public final class EfeitosSonoros {
      * @return clip pronto para tocar, ou {@code null} se não for possível carregar
      */
     private static Clip carregar(String caminho) {
-        URL url = EfeitosSonoros.class.getResource(caminho);
+        return carregarDe(EfeitosSonoros.class.getResource(caminho), caminho);
+    }
+
+    /**
+     * Carrega um clipe a partir de uma URL arbitrária. Existe separado de
+     * {@link #carregar(String)} para que os testes consigam apontar para uma WAV
+     * de dentro de um jar: no classpath de teste os recursos são arquivos soltos,
+     * e um {@code file:} URL já entrega um stream bufferizado — o que esconde
+     * justamente o defeito que só aparece na distribuição.
+     *
+     * @param url     recurso de áudio
+     * @param rotulo  nome usado nas mensagens de erro
+     * @return clip pronto para tocar, ou {@code null} se não foi possível carregar
+     */
+    static Clip carregarDe(URL url, String rotulo) {
         if (url == null) {
-            ultimoErro = "recurso ausente: " + caminho;
+            ultimoErro = "recurso ausente: " + rotulo;
             audioIndisponivel = true;
             return null;
         }
