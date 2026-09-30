@@ -14,6 +14,10 @@ src/main/java/com/portfolio/pong/
 │   └── EfeitosSonoros.java
 └── ui/         Interface gráfica Swing
     └── TelaPong.java
+
+src/main/resources/
+├── logo-{16,24,32,48,64,128,256}.png   # Ícone da janela, uma por resolução
+└── sons/                              # 7 .wav sintetizados
 ```
 
 ## A Fazer (Backlog)
@@ -45,6 +49,7 @@ _— vazio —_
 - **fx**: `Animacoes` — `emitirFogo` (chamas + marca de queimado persistente, limite 250), `explosaoGol` (40 partículas + tremor), `confete`, `adicionarTremor`/decaimento, `limpar`, limite de 400 partículas — validado por smoke test
 - **audio**: `EfeitosSonoros` — mesmo padrão da Forca (enum `Som`, carga preguiçosa, cache de `Clip`, ganho −9 dB, interruptor global)
 - **audio**: 7 `.wav` sintetizados (PCM 16-bit 44.1kHz mono) em `src/main/resources/sons/` — rebater, parede, gol, especial, clique, vitoria, premio — validados por `AudioSystem` (carregamento pelo classpath)
+- **ui**: logo da janela em 7 resoluções (`src/main/resources/logo-*.png`), carregado do classpath e aplicado via `setIconImages` — o Windows escolhe a imagem de cada contexto em vez de escalar uma só; carga tolerante a arquivo ausente, com smoke test das 7 resoluções
 - **ui**: `TelaPong` — briefing customizado, controle via KeyBindings (W/S, ↑/↓, Z/M, Espaço, Esc), campo 800×500 escalado (letterbox/responsivo), HUD futebol (P1\|⏱\|P2, timer vermelho piscando nos últimos 10s, 3 traços de carga do especial), countdown 3-2-1-JÁ!, banner GOL!, gol de ouro, glassmorphism nos cards, skins com seletor ◀▶ + Personalizar (JColorChooser), pausa real com Retomar/Reiniciar/Início, fim com stats (placar/duração/melhor troca/velocidade máx) + Jogar de novo/Início, brilho no especial, marca de queimado, **badges de efeito sobre a raquete** (ícone + segundos) e **cards de prêmio com ícones vetoriais** (sem depender de fonte: ↕ ❄ ⚡ ⏱ ▮ 🔵 viram formas, o "?" do coringa é ASCII) — renderizado sem erros nas 6 fases (smoke test headless) e `mvn package` OK
 
 ## Regras (tomadas de decisão)
