@@ -302,7 +302,9 @@ jogo-pong/
 - [x] Motor de partículas e animações
 - [x] TelaPong: briefing, jogo, pausa, fim + HUD futebol
 - [x] Efeitos sonoros (corrigidos para tocar de dentro do `.jar`/`.exe`)
-- [x] Testes unitários — 149 testes na branch `testes-jogo-pong`
+- [x] Testes unitários — 180 testes (branch `testes-jogo-pong`, mergeada na `main`)
+- [x] Hover dos botões — o destaque nunca acendia em jogo (`Botao`/`Botaos` extraídos de `TelaPong`)
+- [x] Prêmios no gol de ouro — o card em campo não congela mais
 - [x] Publicar no GitHub e lançar a **v1.0.0** (`main` + `testes-jogo-pong`)
 
 ### Em aberto (ver [`KANBAN.md`](KANBAN.md))
@@ -311,8 +313,9 @@ jogo-pong/
       primeiro badge é desenhado 20px acima da raquete e cada um sobe mais 21px;
       com a raquete em `y = 0` e os 5 efeitos ativos o topo chega a y = −104 e
       nenhum aparece. Sem `clip`, e sem exceção, então nada acusa
-- [ ] Testes de UI — a camada não tem nenhum; a suíte de 149 cobre só `core`,
-      `skin`, `fx` e `audio`
+- [ ] Layout sem teste — `ui/` tem `BotaosTest` (o hover), mas a **geometria** do
+      desenho ainda não tem cobertura: badges e cards de prêmio dependem de
+      decisões tomadas dentro do `paintComponent`
 - [ ] Polir a IA com 2 bolas (adiado)
 
 O ícone na barra de tarefas/Alt+Tab e o feeling da janela de 5s do especial já
