@@ -84,31 +84,8 @@ public final class TelaPong {
 
     private enum Fase { BRIEFING, CONTAGEM, JOGANDO, PAUSA, FIM }
 
-    /** Botão desenhado manualmente (utilizado nos overlays e no briefing). */
-    private static final class Botao {
-        final String texto;
-        final int x, y, w, h;
-        final Runnable acao;
-        boolean selecionado;
-        boolean hover;
-        boolean ativo = true;
-
-        Botao(String texto, int x, int y, int w, int h, Runnable acao) {
-            this.texto = texto;
-            this.x = x;
-            this.y = y;
-            this.w = w;
-            this.h = h;
-            this.acao = acao;
-        }
-
-        boolean contem(int px, int py) {
-            return ativo && px >= x && px <= x + w && py >= y && py <= y + h;
-        }
-    }
-
     private final CatalogoSkins catalogo = new CatalogoSkins();
-    private final List<Botao> botoes = new ArrayList<>();
+    private final Botaos botoes = new Botaos();
     private final PongTela tabuleiro = new PongTela();
     private final Timer loop;
 
@@ -406,7 +383,10 @@ public final class TelaPong {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            botoes.clear();
+            // A lista de botões é efêmera e refeita aqui a cada quadro; o
+            // highlight do mouse NÃO é, e sobrevive em Botaos. Guardá-lo em cada
+            // instância de Botao fazia o destaque sumir na repinturação seguinte.
+            botoes.limpar();
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -1153,10 +1133,10 @@ public final class TelaPong {
         int larg = g2.getFontMetrics().stringWidth(atual);
         g2.drawString(atual, x + (w - larg) / 2, y + h / 2 + 5);
 
-        novoBotao("◀", x, y, 26, h, () -> aoMudar.ir(-1)).selecionado = false;
-        novoBotao("▶", x + w - 26, y, 26, h, () -> aoMudar.ir(+1)).selecionado = false;
-        desenharBotao(g2, botoes.get(botoes.size() - 2));
-        desenharBotao(g2, botoes.get(botoes.size() - 1));
+        Botao anterior = botoes.adicionar(new Botao("◀", x, y, 26, h, () -> aoMudar.ir(-1)));
+        Botao proximo = botoes.adicionar(new Botao("▶", x + w - 26, y, 26, h, () -> aoMudar.ir(+1)));
+        desenharBotao(g2, anterior);
+        desenharBotao(g2, proximo);
     }
 
     private Botao piscar(Graphics2D g2, String texto, int x, int y, int w, int h, boolean selecionado,
@@ -1168,14 +1148,13 @@ public final class TelaPong {
     }
 
     private Botao novoBotao(String texto, int x, int y, int w, int h, Runnable acao) {
-        Botao b = new Botao(texto, x, y, w, h, acao);
-        botoes.add(b);
-        return b;
+        return botoes.adicionar(new Botao(texto, x, y, w, h, acao));
     }
 
     private void desenharBotao(Graphics2D g2, Botao b) {
+        boolean hover = botoes.temHighlight(b);
         Color fundo = b.selecionado ? new Color(0xFFD700)
-                : (b.hover ? new Color(255, 255, 255, 70) : new Color(255, 255, 255, 32));
+                : (hover ? new Color(255, 255, 255, 70) : new Color(255, 255, 255, 32));
         g2.setColor(fundo);
         g2.fillRoundRect(b.x, b.y, b.w, b.h, 12, 12);
         g2.setStroke(new BasicStroke(1.2f));
@@ -1265,8 +1244,8 @@ public final class TelaPong {
                 () -> iniciarPartida());
         deNovo.selecionado = true;
         desenharBotao(g2, deNovo);
-        novoBotao("Início", cardX + cardW - 190, yB, 150, 34, this::voltarAoBriefing);
-        desenharBotao(g2, botoes.get(botoes.size() - 1));
+        desenharBotao(g2, novoBotao("Início", cardX + cardW - 190, yB, 150, 34,
+                this::voltarAoBriefing));
     }
 
     private String vencedorTexto() {
@@ -1287,27 +1266,14 @@ public final class TelaPong {
     // -------------------------------------------------------- Interação
 
     private void ativarHover(int px, int py) {
-        boolean mudou = false;
-        for (Botao b : botoes) {
-            boolean hover = b.contem(px, py);
-            if (b.hover != hover) {
-                b.hover = hover;
-                mudou = true;
-            }
-        }
-        if (mudou) {
+        if (botoes.moverPara(px, py)) {
             tabuleiro.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             tabuleiro.repaint();
         }
     }
 
     private void clicar(int px, int py) {
-        for (Botao b : botoes) {
-            if (b.contem(px, py)) {
-                b.acao.run();
-                return;
-            }
-        }
+        botoes.acionar(px, py);
     }
 
     private void dibujaAura(Graphics2D g2, int cx, int cy, int raio, Color cor) {
