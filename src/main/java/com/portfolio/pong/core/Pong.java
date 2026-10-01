@@ -530,13 +530,18 @@ public class Pong {
     /**
      * Gerencia os prêmios do campo: agenda as levas, expira os que acabaram e
      * detecta a coleta pela bola (um por frame; quem coleta é o último que
-     * rebateu). Nada surge durante o gol de ouro.
+     * rebateu). No gol de ouro não surge leva nova, mas os prêmios já em campo
+     * seguem correndo: expiram e podem ser coletados.
      */
     private void atualizarPremio(double dt) {
-        if (golDeOuro) {
-            return;
-        }
+        // No gol de ouro nada novo surge, mas o que já está no campo continua
+        // valendo: expira sozinho e ainda pode ser coletado. Um "return"
+        // aqui congelaria o card no lugar — sem pulso, sem sumir e com a bola
+        // passando por cima sem efeito, que é o que parece travado.
         if (premios.isEmpty()) {
+            if (golDeOuro) {
+                return;
+            }
             tempoProximoSpawn -= dt;
             if (tempoProximoSpawn <= 0.0) {
                 criarLeva();
