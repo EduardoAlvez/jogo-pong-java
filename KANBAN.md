@@ -95,10 +95,13 @@ _— vazio —_
   coletado (congelar o card no lugar era lido como travamento em jogo); Inverter fora
   do sorteio no 1P e +10s fora do clássico
 - **Branches**: `main` = jogo completo **com a suíte** (11 arquivos em `src/test`, hoje
-  180 testes, publicado assim na v1.0.0); `testes-jogo-pong` = onde se desenvolve os
-  testes novos, que depois são mergeados na `main`. A separação é de fluxo de
-  trabalho, não de conteúdo: a `main` sempre teve a suíte, apesar de a regra antiga
-  dizer o contrário
+  180 testes); `testes-jogo-pong` = onde se desenvolvem os testes novos, que depois
+  são mergeados na `main`. A separação é de fluxo de trabalho, não de conteúdo.
+  **Decisão do usuário (01/10/2026)**: manter a suíte na `main`. Ela não afeta o que
+  é entregue — o JUnit está em `scope=test` e o jar publicado tem 32 classes com
+  **zero** `*Test.class` (conferido) —, e permite `git checkout main && mvn test`
+  validar a árvore que de fato roda. A regra antiga ("`main` sem dependências de
+  teste") ficou sem efeito desde que a suíte foi publicada na v1.0.0
 - **Documentação**: `README.md` e `KANBAN.md` são editados **só na `main`** — não
   nas branches de teste, para o arquivo não divergir entre elas
 - **Distribuição**: o jogo é entregue como `.exe` de arquivo único (launch4j), com o
