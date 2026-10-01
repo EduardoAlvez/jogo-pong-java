@@ -193,6 +193,117 @@ public class PremioTest {
         }
     }
 
+    // ------------------------------------------------- Gol de ouro x prêmios
+    //
+    // O gol de ouro usava um "return" no topo de atualizarPremio, o que
+    // congelava também o que já estava em campo: o card não animava, não
+    // expirava e a bola passava por cima sem coletar. Agora só a leva nova é
+    // bloqueada; o prêmio que já existe continua correndo.
+
+    /** Deixa a partida em modo tempo com o cronômetro zerado e empatada. */
+    private void entrarNoGolDeOuroEmpatado() {
+        pong.configurar(Pong.Modo.TEMPO, Computador.Dificuldade.MEDIO, true, 5, 60);
+        pong.iniciarPartida();
+        pong.getCronometro().atualizar(600);
+        for (int i = 0; i < 60 && !pong.isGolDeOuro(); i++) {
+            pong.atualizar(DT);
+        }
+        assertTrue("a partida deveria estar no gol de ouro", pong.isGolDeOuro());
+    }
+
+    /**
+     * Coloca um prêmio em posição conhecida, longe da bola. A bola é
+     * recentralizada em {@code (400, 250)} com {@code vy = 0}, então ela só
+     * percorre a linha horizontal do meio: o canto superior esquerdo fica fora
+     * do trajeto e o prêmio não é coletado sem querer.
+     */
+    private void semearPremio(Premio.Tipo tipo, double x, double y) {
+        pong.getPremios().add(new Premio(tipo, x, y));
+    }
+
+    /** Prêmio no canto, que a bola recentralizada nunca alcança. */
+    private void semearPremioNoCanto() {
+        semearPremio(Premio.Tipo.TURBO, 120, 100);
+    }
+
+    @Test
+    public void premioEmCampoExpiraDuranteOGolDeOuro() {
+        entrarNoGolDeOuroEmpatado();
+        semearPremioNoCanto();
+        // Longe das paredes, das raquetes e da bola: o prêmio só pode sair
+        // por validade.
+        for (int i = 0; i < (Premio.TEMPO_EXPIRA + 1.0) / DT; i++) {
+            pong.getRaqueteEsquerda().setY(0);
+            pong.getRaqueteDireita().setY(0);
+            pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, 1);
+            pong.atualizar(DT);
+            if (!pong.isGolDeOuro()) {
+                break;
+            }
+        }
+        assertTrue("o prêmio em campo não pode ficar congelado para sempre",
+                pong.getPremios().isEmpty());
+    }
+
+    @Test
+    public void premioEmCampoContinuaAnimandoNoGolDeOuro() {
+        entrarNoGolDeOuroEmpatado();
+        semearPremioNoCanto();
+        double vidaAntes = pong.getPremios().get(0).getTempoDeVida();
+        for (int i = 0; i < 30; i++) {
+            pong.getRaqueteEsquerda().setY(0);
+            pong.getRaqueteDireita().setY(0);
+            pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, 1);
+            pong.atualizar(DT);
+        }
+        assertFalse("o prêmio saiu do campo", pong.getPremios().isEmpty());
+        assertTrue("a animação do prêmio congelou no gol de ouro",
+                pong.getPremios().get(0).getTempoDeVida() > vidaAntes);
+    }
+
+    @Test
+    public void bolaColetaPremioDuranteOGolDeOuro() {
+        entrarNoGolDeOuroEmpatado();
+        semearPremio(Premio.Tipo.CONGELA, LARGURA / 2.0, ALTURA / 2.0);
+        Premio alvo = pong.getPremios().get(0);
+        int antes = pong.getPremios(1) + pong.getPremios(2);
+        // A bola cai em cima do prêmio logo após o gol de ouro começar.
+        pong.getBola().centralizar(alvo.getX(), alvo.getY() - Premio.RAIO - 4, 1);
+        for (int i = 0; i < 60; i++) {
+            pong.atualizar(DT);
+            if (pong.getPremios(1) + pong.getPremios(2) > antes) {
+                break;
+            }
+            if (!pong.isGolDeOuro()) {
+                break;
+            }
+        }
+        assertEquals("a coleta tem que valer no gol de ouro", antes + 1,
+                pong.getPremios(1) + pong.getPremios(2));
+        assertTrue(pong.getPremios().stream().noneMatch(p -> p == alvo));
+    }
+
+    @Test
+    public void naoSurgeLevaNovaNoGolDeOuroPeloAgendamento() {
+        entrarNoGolDeOuroEmpatado();
+        // O spawn real acontece quando tempoProximoSpawn vence dentro de
+        // atualizarPremio. Deixa o campo vazio e corre bem mais que o
+        // intervalo de spawn: nada pode aparecer.
+        assertTrue(pong.getPremios().isEmpty());
+        for (int i = 0; i < 60.0 / DT; i++) {
+            pong.getRaqueteEsquerda().setY(0);
+            pong.getRaqueteDireita().setY(0);
+            pong.getBola().centralizar(LARGURA / 2.0, ALTURA / 2.0, 1);
+            pong.atualizar(DT);
+            if (!pong.isGolDeOuro()) {
+                break;
+            }
+            assertTrue("não pode surgir prêmio no gol de ouro (quadro " + i + ")",
+                    pong.getPremios().isEmpty());
+        }
+        assertTrue("a partida deveria continuar no gol de ouro", pong.isGolDeOuro());
+    }
+
     @Test
     public void bolaColetaOPrêmio() throws Exception {
         criarLeva();
