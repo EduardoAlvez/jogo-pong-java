@@ -6,7 +6,7 @@
 
     <groupId>com.portfolio</groupId>
     <artifactId>jogo-pong</artifactId>
-    <version>1.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <name>Jogo Pong - Portfolio Java (com testes)</name>

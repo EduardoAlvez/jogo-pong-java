@@ -11,8 +11,14 @@ Cronômetro estilo futebol, bola que **pega fogo**, skins e animações de part�
 
 | | Arquivo | Observação |
 |---|---|---|
-| **Windows** | [`jogo-pong-1.0.exe`](https://github.com/EduardoAlvez/jogo-pong-java/releases/tag/v1.0.0) | Arquivo único, com o logo. **Precisa de Java 17+ instalado.** |
-| **Outros** | [`jogo-pong-1.0.jar`](https://github.com/EduardoAlvez/jogo-pong-java/releases/tag/v1.0.0) | `java -jar jogo-pong-1.0.jar` |
+| **Windows** | [`jogo-pong.exe`](https://github.com/EduardoAlvez/jogo-pong-java/releases/tag/v1.0.1) | Arquivo único, com o logo. **Precisa de Java 17+ instalado.** |
+| **Outros** | [`jogo-pong-1.0.1.jar`](https://github.com/EduardoAlvez/jogo-pong-java/releases/tag/v1.0.1) | `java -jar jogo-pong-1.0.1.jar` |
+
+> **1.0.1** corrige dois defeitos visuais que a 1.0.0 tinha: o **hover dos botões
+> nunca acendia** (o cursor virava mão, mas o fundo não clareava) e o **prêmio no
+> campo congelava no gol de ouro** (não expirava, não animava, e a bola passava por
+> cima sem coletar). Quem quiser a 1.0.0 continua na
+> [tag anterior](https://github.com/EduardoAlvez/jogo-pong-java/releases/tag/v1.0.0).
 
 O executável não embute a JRE para não pesar centenas de MB: se não encontrar
 nenhum Java instalado, ele mostra uma caixa de erro apontando para o download.
@@ -305,7 +311,7 @@ jogo-pong/
 - [x] Testes unitários — 180 testes (branch `testes-jogo-pong`, mergeada na `main`)
 - [x] Hover dos botões — o destaque nunca acendia em jogo (`Botao`/`Botaos` extraídos de `TelaPong`)
 - [x] Prêmios no gol de ouro — o card em campo não congela mais
-- [x] Publicar no GitHub e lançar a **v1.0.0** (`main` + `testes-jogo-pong`)
+- [x] Publicar no GitHub e lançar a **v1.0.1** (`main` + `testes-jogo-pong`)
 
 ### Em aberto (ver [`KANBAN.md`](KANBAN.md))
 

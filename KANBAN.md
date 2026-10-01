@@ -1,5 +1,28 @@
 # Kanban — Jogo Pong
 
+## Status: concluído (por enquanto) — 01/10/2026
+
+**Released como v1.0.1**, com 180 testes verdes nas duas branches e o
+executável conferido embutindo o jar corrigido. O projeto entra em pausa
+aqui por decisão do usuário.
+
+**O que ficou fechado**: os dois defeitos visuais achados depois da
+validação visual — o hover dos botões que nunca acendia e o prêmio que
+congelava no gol de ouro — estão corrigidos, testados (com mutação
+verificada em ambos) e publicados na 1.0.1.
+
+**O que fica registrado para quem voltar**:
+
+- **O badge fora do campo continua aberto** (item 1 abaixo) e está presente
+  na 1.0.1. É limitação conhecida, não bug escondido.
+- O layout da `ui/` continua sem cobertura automática (item 2): o badge
+  precisa de uma classe de geometria pura para ser testável.
+- A medição do badge foi **corrigida**: a visibilidade depende de `escala`
+  e `oy` do letterbox. Na janela padrão 3 badges aparecem e 2 saem; o caso
+  "nenhum aparece" é de tela grande.
+- Nada foi validado visualmente depois de 30/09: os testes provam que o
+  destaque acende e que o prêmio expira, não que ficou bonito na tela.
+
 ## Estrutura (subpacotes por camada)
 
 ```
@@ -34,9 +57,9 @@ target/                                   # Saída do build (não versionada)
 
 | # | Prioridade | Camada | Tarefa | Detalhes |
 |---|-----------|--------|--------|----------|
-| 1 | **Alta** | ui | **Badges somem com a raquete no topo** | **Defeito confirmado, não confirmado a olho.** Em `TelaPong.desenharBadges` o primeiro badge é desenhado em `r.getY() - 20` e cada um sobe mais 21px. `Raquete.setY` permite `y = 0`, e não há `clip` no desenho: com a raquete encostada no topo os badges saem do campo — 1 badge corta 20px, 3 cortam 62px e **com os 5 ativos (Inverter+Congelar+Turbo+Chamas+Encolher, todos podem coexistir) o topo chega a y = −104 e nenhum aparece**. Nenhuma exceção é lançada, por isso nenhum teste existente pega. **A fazer**: (a) decidir o desenho — inverter a pilha para baixo quando não couber acima, ou reservar faixa reservada; (b) teste de layout que falhe se algum badge sair de `[0, FH]`, com a raquete em `y = 0` e 5 efeitos ativos. Conferir também o rodapé: a pilha desce 21px por badge a partir de `r.getY() - 20` e o mesmo recorte vale para baixo |
+| 1 | **Alta** | ui | **Badges somem com a raquete no topo** | **Defeito conhecido da 1.0.1, aceito como limitação até o projeto voltar.** Em `TelaPong.desenharBadges` o primeiro badge é desenhado em `r.getY() - 20` e cada um sobe mais 21px. `Raquete.setY` permite `y = 0`, e não há `clip` no desenho: com a raquete encostada no topo os badges saem do campo — 1 badge corta 20px, 3 cortam 62px e **com os 5 ativos (Inverter+Congelar+Turbo+Chamas+Encolher, todos podem coexistir) o topo chega a y = −104 e nenhum aparece**. Nenhuma exceção é lançada, por isso nenhum teste existente pega. **Medição corrigida depois**: a visibilidade depende de `escala` e `oy` do letterbox, não só de `[0, FH]` — na janela padrão (`escala` 1,10) 3 badges aparecem na margem e 2 saem; "nenhum aparece" só vale acima de `escala` 3,3 (4K maximizada), onde até um badge único sai. **A fazer**: (a) decidir o desenho — inverter a pilha para baixo quando não couber acima, reservar faixa, ou empilhar na horizontal; (b) extrair a geometria para uma classe pura (como `LayoutSnake`) e testar que nenhum badge sai do campo, com a raquete em `y = 0` e 5 efeitos ativos |
 | 2 | Média | ui | Testes de UI (parciais) | A suíte tem **180 testes**; `ui/` agora tem `BotaosTest` (27 testes), extração que tornou o hover testável sem abrir janela. Ainda não coberto: **o layout em si** — `TelaPong` só aparece como referência, nunca é instanciada num teste, e a geometria dos badges (item 1) e dos cards de prêmio (entrada, halo, ícone vetorial) continua sem verificação automática. **A fazer**: extrair a geometria para uma classe pura de layout (como `LayoutSnake` no outro jogo) e testá-la |
-| 3 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`, já mergeada na `main`. A suíte vive nas duas: **180 testes, todos verdes** (core 122, ui 27, skin 12, fx 10, audio 9), com `Pong` em 95,3% de cobertura. O `pom` (JUnit 4.13.2 + surefire + JaCoCo) e o `src/test` estão hoje **na `main`**, que foi publicada assim na v1.0.0. Cobrem física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, skins/persistência/fallback, fogo por velocidade, bateria do especial, **prêmios (levas, validade, sorteio, coleta e os 8 efeitos, incluindo o que acontece com o prêmio em campo no gol de ouro)**, **pausa pós-gol**, **IA com 2 bolas**, **o portão do especial** (bola no seu campo, meio compartilhado, 2 bolas, um especial por vez e o ratchet de velocidade com os dois querendo usar), **o hover dos botões** e **o áudio servido de dentro de um jar** (regressão do silêncio no executável, troca de mixer e linha que não produz áudio). Cada teste novo de regra vem com o cenário simultâneo e o de reversão |
+| 3 | Média | (branch) | Testes unitários | Branch `testes-jogo-pong`, já mergeada na `main`. A suíte vive nas duas: **180 testes, todos verdes** (core 122, ui 27, skin 12, fx 10, audio 9), com `Pong` em 95,3% de cobertura. O `pom` (JUnit 4.13.2 + surefire + JaCoCo) e o `src/test` estão hoje **na `main`**, que foi publicada assim na v1.0.1. Cobrem física, placar/sacada, IA nos limites, vitória pontos/tempo, gol de ouro, cronômetro, skins/persistência/fallback, fogo por velocidade, bateria do especial, **prêmios (levas, validade, sorteio, coleta e os 8 efeitos, incluindo o que acontece com o prêmio em campo no gol de ouro)**, **pausa pós-gol**, **IA com 2 bolas**, **o portão do especial** (bola no seu campo, meio compartilhado, 2 bolas, um especial por vez e o ratchet de velocidade com os dois querendo usar), **o hover dos botões** e **o áudio servido de dentro de um jar** (regressão do silêncio no executável, troca de mixer e linha que não produz áudio). Cada teste novo de regra vem com o cenário simultâneo e o de reversão |
 | 4 | Baixa | core+ui | Polir a IA com 2 bolas | A CPU agora defende a bola mais urgente. Opcional: reduzir velocidade/reação da CPU enquanto houver 2 bolas, para o prêmio bola extra continuar sendo desafio real. **Adiado pelo usuário** |
 
 ## Validação visual (conferida na mão pelo usuário)
@@ -71,7 +94,7 @@ _— vazio —_
 - **audio**: `EfeitosSonoros` — enum `Som`, cache de `Clip`, ganho −9 dB, interruptor global e **escolha explícita de mixer** (padrão, depois os demais, com verificação de que a linha produziu áudio de fato) para sobreviver à troca de dispositivo pelo Windows. A carga sai da EDT e recarrega sozinha quando a lista de mixers muda. **Correção do silêncio no executável**: o áudio é servido de dentro do jar e `AudioSystem.getAudioInputStream()` precisa de `mark/reset` para ler o cabeçalho do WAV, que o stream cru de uma entrada de jar não oferece — daí o `BufferedInputStream`; sem ele o jogo ficava mudo, sem erro visível, no jar e no `.exe`
 - **audio**: 7 `.wav` sintetizados (PCM 16-bit 44.1kHz mono) em `src/main/resources/sons/` — rebater, parede, gol, especial, clique, vitoria, premio — validados por `AudioSystem` pelo classpath e **lendo de dentro de um jar**, que é como o jogo é distribuído
 - **distribuição**: `logo.ico` gerado por `tools/GerarLogo.java` a partir de `logo-256.png`, em 7 resoluções, e `target/jogo-pong.exe` via launch4j — arquivo único com o jar embutido, ícone e VersionInfo, exigindo Java 17+ (sem JRE embarcado). O ícone extraído do executável foi conferido contra o `logo-32.png`
-- **publicação**: repositório `github.com/EduardoAlvez/jogo-pong-java` com as branches `main` e `testes-jogo-pong`, descrição e topics; **release v1.0.0** com `jogo-pong-1.0.exe` (364 250 bytes) e `jogo-pong-1.0.jar` (241 882 bytes). Os anexos foram baixados de volta e conferidos por SHA-256 contra o build local, e o `.exe` baixado foi executado para confirmar que abre. O pom saiu do `-SNAPSHOT` para `1.0` para a versão publicada casar com a do executável
+- **publicação**: repositório `github.com/EduardoAlvez/jogo-pong-java` com as branches `main` e `testes-jogo-pong`, descrição e topics; **release v1.0.1** com `jogo-pong-1.0.exe` (365 625 bytes, SHA-256 `33f9f3da…a2c90c`) e `jogo-pong-1.0.1.jar` (243 257 bytes, SHA-256 `a749631c…08a8e`). O `.exe` foi aberto e conferido embutindo o jar novo (`Botao`/`Botaos` presentes). A 1.0.0 fica disponível na tag anterior, com os dois defeitos visuais corrigidos na 1.0.1
 - **ui**: logo da janela em 7 resoluções (`src/main/resources/logo-*.png`), carregado do classpath e aplicado via `setIconImages` — o Windows escolhe a imagem de cada contexto em vez de escalar uma só; carga tolerante a arquivo ausente, verificada por harness headless próprio (fora da suíte)
 - **ui**: `TelaPong` — briefing customizado, controle via KeyBindings (W/S, ↑/↓, Z/M, Espaço, Esc), campo 800×500 escalado (letterbox/responsivo), HUD futebol (P1\|⏱\|P2, timer vermelho piscando nos últimos 10s, 3 traços de carga do especial), countdown 3-2-1-JÁ!, banner GOL!, gol de ouro, glassmorphism nos cards, skins com seletor ◀▶ + Personalizar (JColorChooser), pausa real com Retomar/Reiniciar/Início, fim com stats (placar/duração/melhor troca/velocidade máx) + Jogar de novo/Início, brilho no especial, marca de queimado, **badges de efeito sobre a raquete** (ícone + segundos) e **cards de prêmio com ícones vetoriais** (sem depender de fonte: ↕ ❄ ⚡ ⏱ ▮ 🔵 viram formas, o "?" do coringa é ASCII) — as 6 fases renderizam sem erro (harness headless pontual, **fora da suíte**: não há teste de UI) e `mvn package` OK. **Defeito conhecido**: os badges de efeito saem do campo quando a raquete encosta no topo — ver item 1 do backlog
 - **ui**: hover dos botões — o destaque **nunca acendia** em jogo, e o defeito estava certo: o cursor virava mão, mas o fundo não clareava, então o jogo parecia interativo sem responder ao mouse. O estado vivia em cada instância de `Botao`, que a própria pintura recria a cada quadro (o highlight era apagado antes de ser lido). `Botao` e `Botaos` foram extraídos de `TelaPong` como classes sem Swing: o highlight passou a mora em `Botaos`, que vive a partida, e é comparado pela **chave geométrica** (`x:y:w:h`) em vez da identidade do objeto — assim o botão recriado pela pintura reencontra o seu destaque, e trocar o rótulo (o som muda o texto) não o perde. Ao corrigir, o teste pegou um bug da própria implementação: com botões sobrepostos, `sob()` devolvia o **primeiro**, e o clique podia acertar o botão errado — agora vale o último, que é a ordem de pintura. 27 testes em `BotaosTest`, incluindo o que reproduz o defeito (marcar, repinturar, conferir que o destaque continua). Mutação verificada: voltar ao highlight por instância derruba 4 dos testes
@@ -101,12 +124,12 @@ _— vazio —_
   é entregue — o JUnit está em `scope=test` e o jar publicado tem 32 classes com
   **zero** `*Test.class` (conferido) —, e permite `git checkout main && mvn test`
   validar a árvore que de fato roda. A regra antiga ("`main` sem dependências de
-  teste") ficou sem efeito desde que a suíte foi publicada na v1.0.0
+  teste") ficou sem efeito desde que a suíte foi publicada na v1.0.0 (e na 1.0.1)
 - **Documentação**: `README.md` e `KANBAN.md` são editados **só na `main`** — não
   nas branches de teste, para o arquivo não divergir entre elas
 - **Distribuição**: o jogo é entregue como `.exe` de arquivo único (launch4j), com o
   jar embutido e **sem JRE embarcado** — exige Java 17+ instalado. Um `.jar` não
   permite definir o ícone mostrado pelo Explorer, que é o motivo do executável
-- **Publicação**: `README.md` e `KANBAN.md` descrevem a `1.0.0`; a nota de release
+- **Publicação**: `README.md` e `KANBAN.md` descrevem a `1.0.1`; a nota de release
   fica no corpo da release do GitHub, não versionada no repositório. A release
   anexa o `.exe` e o `.jar`, e ambos são conferidos por hash após o upload
